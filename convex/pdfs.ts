@@ -136,6 +136,108 @@ export const getPdfById = query({
   },
 });
 
+export const getPdfAnnotations = query({
+  args: {
+    pdfId: v.id("pdfs"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthenticated");
+    }
+
+    const pdf = await ctx.db.get(args.pdfId);
+    if (!pdf || pdf.userId !== userId) {
+      throw new Error("PDF not found or not authorized");
+    }
+
+    return await ctx.db
+      .query("pdfAnnotations")
+      .withIndex("by_pdfId", (q) => q.eq("pdfId", args.pdfId))
+      .order("asc")
+      .collect();
+  },
+});
+
+export const createPdfAnnotation = mutation({
+  args: {
+    pdfId: v.id("pdfs"),
+    pageNumber: v.number(),
+    text: v.string(),
+    highlights: v.array(
+      v.object({
+        pageNumber: v.number(),
+        top: v.number(),
+        left: v.number(),
+        height: v.number(),
+        width: v.number(),
+      }),
+    ),
+    color: v.string(),
+    borderColor: v.string(),
+    comment: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthenticated");
+    }
+
+    const pdf = await ctx.db.get(args.pdfId);
+    if (!pdf || pdf.userId !== userId) {
+      throw new Error("PDF not found or not authorized");
+    }
+    if (
+      args.highlights.length === 0 ||
+      !Number.isFinite(args.pageNumber) ||
+      args.pageNumber < 1 ||
+      args.highlights.some(
+        (rect) =>
+          !Number.isFinite(rect.pageNumber) ||
+          rect.pageNumber < 1 ||
+          rect.width <= 0 ||
+          rect.height <= 0 ||
+          ![rect.top, rect.left, rect.width, rect.height].every(
+            Number.isFinite,
+          ),
+      )
+    ) {
+      throw new Error("Invalid PDF annotation geometry");
+    }
+    if (args.text.length > 10000 || (args.comment?.length ?? 0) > 2000) {
+      throw new Error("PDF annotation text is too long");
+    }
+
+    const now = Date.now();
+    return await ctx.db.insert("pdfAnnotations", {
+      ...args,
+      userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const deletePdfAnnotation = mutation({
+  args: {
+    annotationId: v.id("pdfAnnotations"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthenticated");
+    }
+
+    const annotation = await ctx.db.get(args.annotationId);
+    if (!annotation || annotation.userId !== userId) {
+      throw new Error("PDF annotation not found or not authorized");
+    }
+
+    await ctx.db.delete(args.annotationId);
+    return args.annotationId;
+  },
+});
+
 export const getFavPdfs = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, { paginationOpts }) => {
@@ -290,6 +392,13 @@ export const deletePdf = mutation({
     }
 
     await ctx.storage.delete(pdf.storageId);
+    const annotations = await ctx.db
+      .query("pdfAnnotations")
+      .withIndex("by_pdfId", (q) => q.eq("pdfId", args._id))
+      .collect();
+    await Promise.all(
+      annotations.map((annotation) => ctx.db.delete(annotation._id)),
+    );
     await ctx.db.delete(args._id);
     return args._id;
   },

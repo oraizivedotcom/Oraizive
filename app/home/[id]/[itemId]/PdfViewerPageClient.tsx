@@ -2,6 +2,8 @@
 
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AnnotationHighlightLayer,
+  AnnotationsStoreProvider,
   calculateHighlightRects,
   CanvasLayer,
   HighlightLayer,
@@ -11,9 +13,13 @@ import {
   Search as LectorSearch,
   TextLayer,
   Thumbnail,
+  useAnnotations,
   usePdf,
   usePdfJump,
+  usePdfSelection,
   useSearch,
+  type Annotation,
+  type PDFSelectionResult,
 } from "@anaralabs/lector";
 import { GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
 import "pdfjs-dist/web/pdf_viewer.css";
@@ -24,16 +30,27 @@ import {
   FileSearch,
   FileText,
   GripVertical,
+  Highlighter,
+  MessageSquare,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { useQuery } from "@/cache/useQuery";
 import { api } from "@/convex/_generated/api";
 import { recordLastVisitedLocation } from "@/lib/last-visited";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -75,7 +93,7 @@ type LectorSearchResult = {
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 const PDF_PAGE_GAP = 20;
-type PanelMode = "search" | "thumbnails" | null;
+type PanelMode = "search" | "thumbnails" | "annotations" | null;
 
 function isFiniteRectValue(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
@@ -277,6 +295,221 @@ function SearchPanel({
         )}
       </div>
     </aside>
+  );
+}
+
+function AnnotationsPanel({
+  annotations,
+  onDelete,
+  onSelect,
+}: {
+  annotations: Doc<"pdfAnnotations">[];
+  onDelete: (annotationId: Id<"pdfAnnotations">) => void;
+  onSelect: (annotation: Doc<"pdfAnnotations">) => void;
+}) {
+  return (
+    <aside className="flex h-full w-[310px] shrink-0 flex-col border-r border-border bg-card/95 backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-border p-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Highlights & comments
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {annotations.length} saved
+          </p>
+        </div>
+      </div>
+      <div className="flex-1 space-y-2 overflow-y-auto p-2">
+        {annotations.length === 0 ? (
+          <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+            Select text in the PDF to add a highlight or comment.
+          </p>
+        ) : (
+          annotations.map((annotation) => (
+            <div
+              key={annotation._id}
+              className="app-radius-lg border border-border bg-background p-3"
+            >
+              <button
+                type="button"
+                onClick={() => onSelect(annotation)}
+                className="w-full text-left"
+              >
+                <p className="line-clamp-3 text-sm text-foreground">
+                  "{annotation.text}"
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Page {annotation.pageNumber}
+                  {annotation.comment ? " · Comment" : " · Highlight"}
+                </p>
+                {annotation.comment && (
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {annotation.comment}
+                  </p>
+                )}
+              </button>
+              <div className="mt-2 flex justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 px-2 text-muted-foreground hover:text-destructive"
+                  onClick={() => onDelete(annotation._id)}
+                  aria-label="Delete annotation"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function SelectionActions({
+  onHighlight,
+  onComment,
+}: {
+  onHighlight: (selection: PDFSelectionResult) => void;
+  onComment: (selection: PDFSelectionResult) => void;
+}) {
+  const { selection, getSelection } = usePdfSelection();
+  const viewportRef = usePdf((state) => state.viewportRef);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const disabled = selection?.status !== "ready";
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updatePosition = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const selectedText = window.getSelection();
+        const viewport = viewportRef.current;
+        const anchor = selectedText?.anchorNode;
+        const focus = selectedText?.focusNode;
+
+        if (
+          !selectedText ||
+          selectedText.isCollapsed ||
+          !anchor ||
+          !focus ||
+          !viewport?.contains(anchor) ||
+          !viewport.contains(focus)
+        ) {
+          setPosition(null);
+          return;
+        }
+
+        const range = selectedText.getRangeAt(0);
+        const rects = Array.from(range.getClientRects());
+        const rect = rects[rects.length - 1] ?? range.getBoundingClientRect();
+        if (!rect.width && !rect.height) {
+          setPosition(null);
+          return;
+        }
+
+        const toolbarHeight = 48;
+        setPosition({
+          left: Math.max(
+            8,
+            Math.min(rect.left + rect.width / 2, window.innerWidth - 8),
+          ),
+          top:
+            rect.bottom + toolbarHeight + 8 <= window.innerHeight
+              ? rect.bottom + 8
+              : Math.max(8, rect.top - toolbarHeight - 8),
+        });
+      });
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        !(event.target instanceof Node) ||
+        !toolbarRef.current?.contains(event.target)
+      ) {
+        setPosition(null);
+      }
+    };
+
+    document.addEventListener("selectionchange", updatePosition);
+    document.addEventListener("pointerup", updatePosition);
+    document.addEventListener("mouseup", updatePosition);
+    document.addEventListener("keyup", updatePosition);
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("selectionchange", updatePosition);
+      document.removeEventListener("pointerup", updatePosition);
+      document.removeEventListener("mouseup", updatePosition);
+      document.removeEventListener("keyup", updatePosition);
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [viewportRef]);
+
+  const getCurrentSelection = () => {
+    const result = getSelection();
+    if (result && result.highlights.length > 0) return result;
+    return null;
+  };
+
+  return (
+    position && (
+      <div
+        ref={toolbarRef}
+        role="toolbar"
+        aria-label="PDF text selection actions"
+        className="fixed z-[11000001] flex items-center gap-0 app-radius-full border-2 border-border bg-card p-0.5"
+        style={{
+          left: position.left,
+          top: position.top,
+          transform: "translateX(-50%)",
+        }}
+      >
+        <Button
+          type="button"
+          size="default"
+          variant="outline"
+          className="h-11 !border-r-0 !app-radius-l-xl app-radius-r-none px-5"
+          disabled={disabled}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            const result = getCurrentSelection();
+            if (result) onHighlight(result);
+          }}
+        >
+          <Highlighter className="mr-1.5 h-4 w-4" />
+          Highlight
+        </Button>
+        <Button
+          type="button"
+          size="default"
+          variant="outline"
+          className="h-11 !border-l-0 !app-radius-l-none !app-radius-r-xl px-5"
+          disabled={disabled}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            const result = getCurrentSelection();
+            if (result) onComment(result);
+          }}
+        >
+          <MessageSquare className="mr-1.5 h-4 w-4" />
+          Comment
+        </Button>
+      </div>
+    )
   );
 }
 
@@ -497,12 +730,41 @@ function PdfViewerContent({
   const [panelMode, setPanelMode] = useState<PanelMode>(null);
   const searchTooltip = useHoverTooltip(100);
   const thumbnailsTooltip = useHoverTooltip(100);
+  const annotationsTooltip = useHoverTooltip(100);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(pdftitle || "");
   const nameInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const updatePdf = useMutation(api.pdfs.updatePdf);
-  const pdf = useQuery(api.pdfs.getPdfById, { _id: pdfId });
+  const annotations = useQuery(api.pdfs.getPdfAnnotations, { pdfId });
+  const createPdfAnnotation = useMutation(api.pdfs.createPdfAnnotation);
+  const deletePdfAnnotation = useMutation(api.pdfs.deletePdfAnnotation);
+  const setAnnotations = useAnnotations((state) => state.setAnnotations);
+  const { clearSelection } = usePdfSelection();
+  const { jumpToHighlightRects } = usePdfJump();
+  const [commentSelection, setCommentSelection] =
+    useState<PDFSelectionResult | null>(null);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!annotations) return;
+    setAnnotations(
+      annotations.map(
+        (annotation): Annotation => ({
+          id: String(annotation._id),
+          pageNumber: annotation.pageNumber,
+          highlights: annotation.highlights,
+          color: annotation.color,
+          borderColor: annotation.borderColor,
+          metadata: { text: annotation.text },
+          ...(annotation.comment ? { comment: annotation.comment } : {}),
+          createdAt: new Date(annotation.createdAt),
+          updatedAt: new Date(annotation.updatedAt),
+        }),
+      ),
+    );
+  }, [annotations, setAnnotations]);
 
   const toolbarRef = useRef<HTMLDivElement>(null);
   const dragInfoRef = useRef<{
@@ -753,6 +1015,69 @@ function PdfViewerContent({
       }
     }
   }, 100);
+
+  const saveSelection = async (
+    selection: PDFSelectionResult,
+    comment?: string,
+  ) => {
+    const highlights = sanitizeHighlightRects(selection.highlights).map(
+      ({ pageNumber, top, left, height, width }) => ({
+        pageNumber,
+        top,
+        left,
+        height,
+        width,
+      }),
+    );
+    if (highlights.length === 0) {
+      toast({
+        title: "Couldn't save annotation",
+        description: "Select text in the PDF before annotating.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createPdfAnnotation({
+        pdfId,
+        pageNumber: Math.min(...highlights.map((rect) => rect.pageNumber)),
+        text: selection.text,
+        highlights,
+        color: "rgba(250, 204, 21, 0.35)",
+        borderColor: "rgba(202, 138, 4, 0.9)",
+        ...(comment ? { comment } : {}),
+      });
+      clearSelection();
+      setCommentSelection(null);
+      setCommentDraft("");
+      setIsCommentDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving PDF annotation:", error);
+      toast({
+        title: "Couldn't save annotation",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAnnotation = async (annotationId: Id<"pdfAnnotations">) => {
+    try {
+      await deletePdfAnnotation({ annotationId });
+      toast({ title: "Annotation deleted" });
+    } catch (error) {
+      console.error("Error deleting PDF annotation:", error);
+      toast({
+        title: "Couldn't delete annotation",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <LectorSearch
       loading={
@@ -900,6 +1225,42 @@ function PdfViewerContent({
                         : "Open Thumbnails"}
                     </TooltipContent>
                   </Tooltip>
+                  <Tooltip open={annotationsTooltip.open}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 border-y border-r !border-l-0 border-border app-radius-none"
+                        onClick={() =>
+                          setPanelMode((current) =>
+                            current === "annotations" ? null : "annotations",
+                          )
+                        }
+                        aria-label={
+                          panelMode === "annotations"
+                            ? "Close annotations panel"
+                            : "Open annotations panel"
+                        }
+                        aria-pressed={panelMode === "annotations"}
+                        {...annotationsTooltip.triggerProps}
+                      >
+                        {panelMode === "annotations" ? (
+                          <X size={16} />
+                        ) : (
+                          <MessageSquare size={16} />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      className="text-xs px-1.5 py-1"
+                    >
+                      {panelMode === "annotations"
+                        ? "Close Annotations"
+                        : "Open Annotations"}
+                    </TooltipContent>
+                  </Tooltip>
                   <ZoomDropdown />
                 </div>
               </span>
@@ -955,16 +1316,120 @@ function PdfViewerContent({
           </div>
         ) : null}
 
+        {panelMode === "annotations" ? (
+          <div className="absolute left-0 top-0 z-50 h-full max-w-[calc(100%-1.5rem)] overflow-hidden border border-border border-l-0 border-t-0">
+            <AnnotationsPanel
+              annotations={annotations ?? []}
+              onDelete={(annotationId) =>
+                void handleDeleteAnnotation(annotationId)
+              }
+              onSelect={(annotation) => {
+                jumpToHighlightRects(
+                  annotation.highlights,
+                  "pixels",
+                  "center",
+                  -40,
+                );
+                setPanelMode(null);
+              }}
+            />
+          </div>
+        ) : null}
+
         <div className=" absolute inset-y-0 right-0 z-10 flex h-screen w-full items-center justify-center border-b border-border bg-background">
           <Pages className="scrollbar-gutter-stable [&::-webkit-scrollbar-track]:bg-transparent h-full min-h-0 w-full transition-all scroll-smooth [&::-webkit-scrollbar]:h-[0.4rem] [&::-webkit-scrollbar]:w-[0.4rem] [&::-webkit-scrollbar-thumb]:bg-border">
             <Page>
               <CanvasLayer />
               <TextLayer />
               <HighlightLayer />
+              <AnnotationHighlightLayer
+                className="absolute inset-0 z-[4] pointer-events-none"
+                highlightClassName="pointer-events-auto"
+                underlineClassName="pointer-events-auto"
+                commentIconClassName="pointer-events-auto"
+                commentIconPosition="highlight"
+                commmentIcon={<MessageSquare className="h-3 w-3" />}
+                renderTooltipContent={({ annotation }) => (
+                  <div className="max-w-64 app-radius-lg border border-border bg-card p-3 text-card-foreground shadow-lg">
+                    <p className="line-clamp-3 text-sm font-medium">
+                      {typeof annotation.metadata?.text === "string"
+                        ? annotation.metadata.text
+                        : "Highlighted text"}
+                    </p>
+                    {annotation.comment && (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {annotation.comment}
+                      </p>
+                    )}
+                  </div>
+                )}
+                renderHoverTooltipContent={({ annotation }) => (
+                  <div className="max-w-64 app-radius-lg border border-border bg-card p-3 text-card-foreground shadow-lg">
+                    {annotation.comment ||
+                      (typeof annotation.metadata?.text === "string"
+                        ? annotation.metadata.text
+                        : "Highlighted text")}
+                  </div>
+                )}
+              />
             </Page>
           </Pages>
         </div>
       </div>
+      <SelectionActions
+        onHighlight={(selection) => void saveSelection(selection)}
+        onComment={(selection) => {
+          setCommentSelection(selection);
+          setCommentDraft("");
+          setIsCommentDialogOpen(true);
+        }}
+      />
+      <Dialog
+        open={isCommentDialogOpen}
+        onOpenChange={(open) => {
+          setIsCommentDialogOpen(open);
+          if (!open) {
+            setCommentSelection(null);
+            setCommentDraft("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a comment</DialogTitle>
+            <DialogDescription>
+              Your comment will be attached to the selected text.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={commentDraft}
+            onChange={(event) => setCommentDraft(event.target.value)}
+            placeholder="Write a comment..."
+            maxLength={2000}
+            autoFocus
+          />
+          <DialogFooter className="justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCommentDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!commentDraft.trim() || !commentSelection}
+              onClick={() => {
+                if (commentSelection) {
+                  void saveSelection(commentSelection, commentDraft.trim());
+                }
+              }}
+            >
+              Save comment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </LectorSearch>
   );
 }
@@ -985,31 +1450,33 @@ function PdfViewerShell({
   const { open, isMobile } = useSidebar();
 
   return (
-    <Root
-      source={fileUrl}
-      isZoomFitWidth
-      className={cn(
-        "pdf-viewer-shell relative h-full w-full overflow-hidden app-radius-none border-0 bg-background flex flex-col justify-stretch",
-        open && !isMobile && !renderedInPane && "app-radius-tl-lg",
-      )}
-      loader={
-        <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-          Loading PDF...
-        </div>
-      }
-      zoomOptions={{
-        minZoom: 0.5,
-        maxZoom: 10,
-      }}
-    >
-      <PdfViewerContent
-        fileUrl={fileUrl}
-        title={title}
-        pdfId={pdfId}
-        pdftitle={pdftitle}
-        renderedInPane={renderedInPane}
-      />
-    </Root>
+    <AnnotationsStoreProvider key={pdfId}>
+      <Root
+        source={fileUrl}
+        isZoomFitWidth
+        className={cn(
+          "pdf-viewer-shell relative h-full w-full overflow-hidden app-radius-none border-0 bg-background flex flex-col justify-stretch",
+          open && !isMobile && !renderedInPane && "app-radius-tl-lg",
+        )}
+        loader={
+          <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+            Loading PDF...
+          </div>
+        }
+        zoomOptions={{
+          minZoom: 0.5,
+          maxZoom: 10,
+        }}
+      >
+        <PdfViewerContent
+          fileUrl={fileUrl}
+          title={title}
+          pdfId={pdfId}
+          pdftitle={pdftitle}
+          renderedInPane={renderedInPane}
+        />
+      </Root>
+    </AnnotationsStoreProvider>
   );
 }
 

@@ -88,6 +88,27 @@ export default defineSchema({
     .index("by_folderId", ["folderId"])
     .index("by_tableId", ["tableId"]),
 
+  pdfAnnotations: defineTable({
+    pdfId: v.id("pdfs"),
+    userId: v.id("users"),
+    pageNumber: v.number(),
+    text: v.string(),
+    highlights: v.array(
+      v.object({
+        pageNumber: v.number(),
+        top: v.number(),
+        left: v.number(),
+        height: v.number(),
+        width: v.number(),
+      }),
+    ),
+    color: v.string(),
+    borderColor: v.string(),
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_pdfId", ["pdfId"]),
+
   whiteboards: defineTable({
     userId: v.id("users"),
     folderId: v.optional(v.id("folders")),

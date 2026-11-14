@@ -787,6 +787,13 @@ div[role="dialog"][data-state="open"]:has([data-sidebar="header"]) {
     border-top-right-radius: calc(var(--radius) + 4px) !important;
     border-bottom-right-radius: calc(var(--radius) + 4px) !important;
   }
+
+  .app-radius-l-xl {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-left-radius: calc(var(--radius) + 4px) !important;
+    border-bottom-left-radius: calc(var(--radius) + 4px) !important;
+  }
 }
 
 /* Add this to your CSS file */
