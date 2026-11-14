@@ -634,7 +634,7 @@ function ZoomDropdown() {
   );
 }
 
-function PageNavigator({ attachEnd = false }: { attachEnd?: boolean }) {
+export function PageNavigator({ attachEnd = false }: { attachEnd?: boolean }) {
   const pages = usePdf((state) => state.pdfDocumentProxy?.numPages);
   const currentPage = usePdf((state) => state.currentPage);
   const [pageNumber, setPageNumber] = useState<string | number>(currentPage);
@@ -654,7 +654,7 @@ function PageNavigator({ attachEnd = false }: { attachEnd?: boolean }) {
 
   useEffect(() => {
     setPageNumber(currentPage);
-  }, [currentPage, pageNumber]);
+  }, [currentPage]);
 
   return (
     <div className=" flex items-center gap-0 text-sm text-muted-foreground ">
