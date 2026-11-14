@@ -755,7 +755,6 @@ function useClientSideOrder<T extends { _id: string }>(
   }, [draggingId, dropTarget, orderedItems, persist, scheduleClearJustDragged]);
 
   const handleDragEnd = useCallback(() => {
-    // Fallback cleanup in case the drop lands outside a valid target.
     setDraggingId(null);
     setDropTarget(null);
     setDraggedSize(null);
@@ -2643,13 +2642,12 @@ function TimelineStackCard({
   const isEmptyDocument =
     isNote &&
     (!item.body ||
-      getContentPreviewFromBody((item as Note).body) ===
-        EMPTY_CONTENT_MESSAGE);
+      getContentPreviewFromBody((item as Note).body) === EMPTY_CONTENT_MESSAGE);
 
   return (
     <div
       className={cn(
-        "absolute inset-0 select-none overflow-hidden app-radius-lg bg-card transition-all duration-300 ease-out flex flex-col justify-start border border-border/80 shadow-xl shadow-black/50",
+        "absolute inset-0 select-none overflow-hidden app-radius-lg bg-card transition-all duration-300 ease-out flex flex-col justify-start border border-border/80",
         className,
       )}
     >
@@ -2657,10 +2655,8 @@ function TimelineStackCard({
         <TimelineHeroBackground item={item} />
       </div>
 
-      {/* Top gradient so text overlay is readable at the top */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-background/95 via-background/60 to-transparent" />
 
-      {/* Title & Author Info at the top so it doesn't get covered by overlapping cards */}
       <div className="relative z-10 flex items-center gap-1.5 p-2 min-w-0">
         {isSocialLink && authorAvatarUrl ? (
           <LinkAuthorAvatar
@@ -2716,7 +2712,7 @@ const TimelineClusterTrigger = memo(
         aria-label={`View ${count} clustered items`}
         {...props}
       >
-        <div className="relative w-[140px] h-[180px] transition-transform duration-300 ease-out group-hover:scale-[1.03]">
+        <div className="relative h-[210px] w-[168px] transition-transform duration-300 ease-out group-hover:scale-[1.03]">
           {visibleItems.length === 1 && (
             <TimelineStackCard
               item={visibleItems[0]}
@@ -3442,7 +3438,7 @@ function CalendarGapMarker({
           size="sm"
           onClick={onToggle}
           className={cn(
-            "absolute z-10 min-h-12 w-6 -translate-x-1/2 flex items-center justify-center px-0.5 py-1.5 text-[10px] font-semibold shadow-sm !app-radius-none",
+            "absolute z-10 h-6 -translate-x-1/2 flex items-center justify-center px-2 text-[10px] font-semibold shadow-sm app-radius-lg",
             gap.expanded ? "top-20" : "top-16",
           )}
           style={{ left: gap.x }}
@@ -3451,7 +3447,7 @@ function CalendarGapMarker({
           }
           {...gapTooltip.triggerProps}
         >
-          <span className="[writing-mode:vertical-rl] leading-none select-none">
+          <span className=" leading-none select-none">
             {gap.expanded ? "hide" : `${gap.emptyDays}d`}
           </span>
         </Button>
@@ -3480,8 +3476,7 @@ function TimelineMiniCard({
   const isEmptyDocument =
     isNote &&
     (!item.body ||
-      getContentPreviewFromBody((item as Note).body) ===
-        EMPTY_CONTENT_MESSAGE);
+      getContentPreviewFromBody((item as Note).body) === EMPTY_CONTENT_MESSAGE);
   const whiteboardFolderId =
     (item as WhiteboardItem).workingSpaceId ??
     (item as any).folderId ??
@@ -3543,7 +3538,6 @@ function TimelineMiniCard({
       "Untitled"
     : item.title || (isLink ? (item as LinkItem).url : "Untitled");
 
-  // Timeline card — full-bleed thumbnail with an info overlay.
   const cardClassName =
     "group relative flex h-[210px] w-[168px] shrink-0 flex-col overflow-hidden border border-border bg-card transition-colors hover:border-muted-foreground/50 app-radius-lg";
 
@@ -3577,8 +3571,8 @@ function TimelineMiniCard({
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              {!isLink && (
-                isNote ? (
+              {!isLink &&
+                (isNote ? (
                   isEmptyDocument ? (
                     <EmptyFileIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   ) : (
@@ -3588,8 +3582,7 @@ function TimelineMiniCard({
                   <PenTool className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 ) : isPdf ? (
                   <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                ) : null
-              )}
+                ) : null)}
               <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
                 {title}
               </p>
@@ -4130,7 +4123,6 @@ function WhiteboardPreview({
   );
 }
 
-// Matches "Jul 28, 2026" - used for note created/updated labels and post dates.
 function formatLongDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString(undefined, {
     month: "short",
@@ -4139,7 +4131,6 @@ function formatLongDate(timestamp: number): string {
   });
 }
 
-// Matches "Jun 25, 2026, 5:36 PM" - used for social post timestamps.
 function formatLongDateTime(timestamp: number): string {
   return new Date(timestamp).toLocaleString(undefined, {
     month: "short",
@@ -4512,7 +4503,6 @@ function NotesSkeleton({ viewMode }: { viewMode: ViewMode }) {
 function TablesSkeleton() {
   return (
     <div>
-      {/* Tab bar: simple flow layout sized to match the real ~44px tab strip */}
       <div className="sticky top-0 left-0 mb-6 z-40">
         <div className="flex items-center gap-1 px-1 pt-2 bg-muted border border-border border-b-0">
           {Array.from({ length: 2 }).map((_, i) => (
