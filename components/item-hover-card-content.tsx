@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, type ReactNode } from "react";
+import { useAction } from "convex/react";
 import {
   FileText,
   File,
   PanelTop,
-  Globe,
   Copy,
   Check,
   Unlink,
-  ExternalLink,
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,9 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useHomePane } from "@/components/home-components/HomePaneDrawer";
+import { api } from "@/convex/_generated/api";
+import { detectLinkPlatform } from "@/lib/link-platform";
+import { cacheItem } from "@/components/mention/mention-cache";
 
 function ThumbnailFrame({
   src,
@@ -148,7 +150,67 @@ export function ItemHoverCardContent({
   canUnlink = true,
 }: ItemHoverCardContentProps) {
   const [copied, setCopied] = useState(false);
+  const [fetchedFallback, setFetchedFallback] = useState<{
+    url: string;
+    title?: string;
+    metadata: ResolvedHoverItem["metadata"];
+  } | null>(null);
   const { openPane } = useHomePane();
+  const fetchLinkMetadata = useAction(api.Linkmetadata.fetchLinkMetadata);
+
+  useEffect(() => {
+    if (item) return;
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(fallbackUrl);
+    } catch {
+      return;
+    }
+
+    if (
+      (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") ||
+      parsedUrl.origin === window.location.origin
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    void fetchLinkMetadata({
+      url: parsedUrl.href,
+      platform: detectLinkPlatform(parsedUrl.href),
+    })
+      .then((result) => {
+        if (cancelled) return;
+
+        const previewTitle = result.title || result.metadata.siteName;
+        const resolvedItem: ResolvedHoverItem = {
+          kind: "link",
+          title:
+            previewTitle || parsedUrl.hostname.replace(/^www\./, ""),
+          url: parsedUrl.href,
+          platform: detectLinkPlatform(parsedUrl.href),
+          metadata: result.metadata,
+          href: parsedUrl.href,
+        };
+
+        cacheItem(resolvedItem);
+        setFetchedFallback({
+          url: parsedUrl.href,
+          title: previewTitle,
+          metadata: result.metadata,
+        });
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Failed to fetch link preview:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchLinkMetadata, fallbackUrl, item]);
 
   const handleCopy = useCallback(async () => {
     const targetUrl = item?.href || item?.url || fallbackUrl;
@@ -163,6 +225,8 @@ export function ItemHoverCardContent({
   }, [item?.href, item?.url, fallbackUrl]);
 
   if (!item) {
+    const preview =
+      fetchedFallback?.url === fallbackUrl ? fetchedFallback : null;
     let domain = "";
     try {
       domain = new URL(fallbackUrl).hostname.replace(/^www\./, "");
@@ -186,23 +250,6 @@ export function ItemHoverCardContent({
             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            {isInternal ? (
-              <IntentPrefetchLink
-                href={fallbackUrl}
-                className="inline-flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground app-radius-md hover:bg-accent transition-colors"
-              >
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </IntentPrefetchLink>
-            ) : (
-              <a
-                href={fallbackUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground app-radius-md hover:bg-accent transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
             <Button
               type="button"
               size="icon"
@@ -230,10 +277,50 @@ export function ItemHoverCardContent({
           </div>
         </div>
 
-        <div className="p-2">
+        <div className="p-2 space-y-3">
+          {preview?.title && (
+            <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2 [overflow-wrap:anywhere]">
+              {preview.title}
+            </p>
+          )}
+          {preview?.metadata?.description && (
+            <p className="line-clamp-3 text-xs text-muted-foreground/90 leading-relaxed">
+              {preview.metadata.description}
+            </p>
+          )}
+          {preview?.metadata?.thumbnailUrl && (
+            <ThumbnailFrame src={preview.metadata.thumbnailUrl}>
+              <LinkThumbnail
+                link={{
+                  url: fallbackUrl,
+                  metadata: preview.metadata,
+                }}
+                showFaviconBadge
+              />
+            </ThumbnailFrame>
+          )}
           <p className="text-xs text-muted-foreground break-all leading-relaxed">
             {fallbackUrl}
           </p>
+          {isInternal ? (
+            <IntentPrefetchLink
+              href={fallbackUrl}
+              className="inline-flex w-full items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium app-radius-md bg-border text-muted-foreground hover:brightness-150 transition-colors shadow-sm"
+            >
+              <span>Open link</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </IntentPrefetchLink>
+          ) : (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex w-full items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium app-radius-md bg-border text-muted-foreground hover:brightness-150 transition-colors shadow-sm"
+            >
+              <span>Open link</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
       </div>
     );
@@ -537,14 +624,6 @@ export function ItemHoverCardContent({
           )}
 
           <div className="flex items-center gap-1 shrink-0">
-            <a
-              href={linkObj.url}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground app-radius-md hover:bg-accent transition-colors"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
             <Button
               type="button"
               size="icon"
@@ -587,6 +666,16 @@ export function ItemHoverCardContent({
         ) : !isSocial ? (
           <LinkThumbnail link={linkObj} showFaviconBadge />
         ) : null}
+
+        <a
+          href={linkObj.url}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="inline-flex w-full items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium app-radius-md bg-border text-muted-foreground hover:brightness-150 transition-colors shadow-sm"
+        >
+          <span>Open link</span>
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </a>
       </div>
     </div>
   );
