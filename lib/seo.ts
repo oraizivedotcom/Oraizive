@@ -4,7 +4,7 @@ const siteUrl = "https://oraizive.com";
 const siteName = "Oraizive";
 const defaultTitle = "Oraizive - Simple, Structured Space For Things";
 const defaultDescription =
-  "Oraizive helps you capture your thoughts, organize them effortlessly and interact with your documents in one clean, modern interface.";
+  "Oraizive helps you capture your thoughts and organize them in one clean, modern interface.";
 
 interface GenerateMetadataParams {
   title?: string;
@@ -30,7 +30,6 @@ export function generateMetadata({
 
   const defaultKeywords = [
     "document creation",
-    "note taking app",
     "AI documents",
     "productivity",
     "organization",
