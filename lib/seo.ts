@@ -35,6 +35,10 @@ export function generateMetadata({
     "organization",
     "smart documents",
     "document organizer",
+    "Links organizer",
+    "organizer",
+    "kanban organizer",
+    "kanban",
     "collaborative documents",
     "folder",
   ];
