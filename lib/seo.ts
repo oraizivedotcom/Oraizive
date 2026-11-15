@@ -43,6 +43,11 @@ export function generateMetadata({
   return {
     title: fullTitle,
     description: fullDescription,
+    icons: {
+      icon: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+      shortcut: "/favicon.png",
+      apple: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+    },
     keywords: [...defaultKeywords, ...keywords],
     authors: [{ name: siteName }],
     creator: siteName,

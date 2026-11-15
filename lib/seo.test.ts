@@ -4,11 +4,16 @@ import { generateMetadata, generateStructuredData } from "./seo";
 describe("generateMetadata", () => {
   it("generates defaults when no params are provided", () => {
     const meta = generateMetadata();
-    expect(meta.title).toBe("oraizive - Simple, Structured Note Taking");
+    expect(meta.title).toBe("Oraizive - Simple, Structured Space For Things");
     expect(meta.description).toContain(
-      "oraizive helps you capture your thoughts",
+      "Oraizive helps you capture your thoughts",
     );
-    expect(meta.openGraph?.siteName).toBe("oraizive");
+    expect(meta.openGraph?.siteName).toBe("Oraizive");
+    expect(meta.icons).toEqual({
+      icon: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+      shortcut: "/favicon.png",
+      apple: [{ url: "/favicon.png", type: "image/png", sizes: "192x192" }],
+    });
     const robots = meta.robots as any;
     expect(robots?.index).toBe(true);
   });

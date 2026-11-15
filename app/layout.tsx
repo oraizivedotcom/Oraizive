@@ -28,11 +28,6 @@ export const metadata: Metadata = {
       "oraizive helps you capture your thoughts, organize them effortlessly and interact with your documents in one clean, modern interface.",
     path: "/",
   }),
-  icons: {
-    icon: "/google-oraizive-logo.png",
-    shortcut: "/google-oraizive-logo.png",
-    apple: "/google-oraizive-logo.png",
-  },
 };
 
 export default function RootLayout({
