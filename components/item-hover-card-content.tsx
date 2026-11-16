@@ -288,6 +288,14 @@ export function ItemHoverCardContent({
               {preview.metadata.description}
             </p>
           )}
+          <a
+            href={fallbackUrl}
+            target={isInternal ? undefined : "_blank"}
+            rel={isInternal ? undefined : "noreferrer noopener"}
+            className="block text-xs text-muted-foreground break-all leading-relaxed hover:text-foreground"
+          >
+            {fallbackUrl}
+          </a>
           {preview?.metadata?.thumbnailUrl && (
             <ThumbnailFrame src={preview.metadata.thumbnailUrl}>
               <LinkThumbnail
@@ -299,9 +307,6 @@ export function ItemHoverCardContent({
               />
             </ThumbnailFrame>
           )}
-          <p className="text-xs text-muted-foreground break-all leading-relaxed">
-            {fallbackUrl}
-          </p>
           {isInternal ? (
             <IntentPrefetchLink
               href={fallbackUrl}
@@ -658,6 +663,15 @@ export function ItemHoverCardContent({
             {item.metadata.description}
           </p>
         )}
+
+        <a
+          href={linkObj.url}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="block text-xs text-muted-foreground break-all leading-relaxed hover:text-foreground"
+        >
+          {linkObj.url}
+        </a>
 
         {hasRealThumbnail ? (
           <ThumbnailFrame src={item.metadata?.thumbnailUrl}>
