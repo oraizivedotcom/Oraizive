@@ -213,6 +213,7 @@ const SidebarHeaderSection = memo(function SidebarHeaderSection({
   newButtonVariant = "default",
 }: SidebarHeaderSectionProps) {
   const popupGuard = useSidebarPopupGuard();
+  const collapseTooltip = useHoverTooltip(200);
 
   return (
     <SidebarHeader className=" text-foreground">
@@ -223,7 +224,18 @@ const SidebarHeaderSection = memo(function SidebarHeaderSection({
             BETA
           </Badge>
         </div>
-        <SidebarTrigger />
+        <Tooltip open={collapseTooltip.open}>
+          <TooltipTrigger asChild>
+            <SidebarTrigger {...collapseTooltip.triggerProps} />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className=" text-xs px-1 flex items-center gap-1"
+          >
+            Collapse sidebar
+            <ShortcutBadge keys="Ctrl+B" />
+          </TooltipContent>
+        </Tooltip>
       </div>
       {getWorkingSpaces?.length === 0 && (
         <div className="flex h-[42px] p-[3px] w-full items-center overflow-hidden ">
