@@ -93,6 +93,35 @@ const TailwindAdvancedEditor = ({
   }, [resolvedTheme]);
 
   useEffect(() => {
+    if (!editorInstance) return;
+
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      const slashMenu = document.getElementById("slash-command");
+      if (
+        target instanceof Node &&
+        (plusMenuRef.current?.contains(target) || slashMenu?.contains(target))
+      ) {
+        return;
+      }
+
+      setPlusMenuOpen(false);
+      if (!slashMenu) return;
+
+      editorInstance.view.dom.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    };
+
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [editorInstance]);
+
+  useEffect(() => {
     if (!plusMenuOpen) return;
     const handleOutside = (e: MouseEvent) => {
       if (
