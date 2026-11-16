@@ -21,6 +21,7 @@ import {
   PanelRightOpen,
   ExternalLink,
   PenTool,
+  MessageCircleHeart,
 } from "lucide-react";
 import { TbSelector } from "react-icons/tb";
 import {
@@ -2081,6 +2082,7 @@ const UserAccountSection = memo(function UserAccountSection({
   const settingsHref = "/home/settings/profile";
   const isSettingsActive = pathname === settingsHref;
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const popupGuard = useSidebarPopupGuard();
 
   return (
@@ -2089,6 +2091,11 @@ const UserAccountSection = memo(function UserAccountSection({
         open={isAccountSettingsOpen}
         onOpenChange={setIsAccountSettingsOpen}
         user={User}
+      />
+      <Feedback
+        open={isFeedbackOpen}
+        onOpenChange={setIsFeedbackOpen}
+        showTrigger={false}
       />
       <SidebarMenu>
         <SidebarMenuItem>
@@ -2175,7 +2182,13 @@ const UserAccountSection = memo(function UserAccountSection({
               <DropdownMenuSeparator />
               <ThemeToggle />
               <DropdownMenuSeparator />
-              <Feedback />
+              <DropdownMenuItem onSelect={() => setIsFeedbackOpen(true)}>
+                <MessageCircleHeart
+                  size={16}
+                  className="text-muted-foreground"
+                />
+                Feedback
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleSignOut}
                 className="group flex h-8 w-full min-w-0 items-center justify-start gap-0 px-2 text-sm font-normal text-foreground "
