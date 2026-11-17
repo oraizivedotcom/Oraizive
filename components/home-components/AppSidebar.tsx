@@ -219,7 +219,9 @@ const SidebarHeaderSection = memo(function SidebarHeaderSection({
     <SidebarHeader className=" text-foreground">
       <div className="flex items-center justify-between p-1">
         <div className="flex items-center gap-1">
-          <span className="font-semibold text-primary">Oraizive</span>
+          <span className="font-semibold text-primary select-none/">
+            Oraizive
+          </span>
           <Badge variant="secondary" className="text-[0.5rem] px-1 py-px">
             BETA
           </Badge>

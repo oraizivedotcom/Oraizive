@@ -2112,7 +2112,7 @@ export function NotesDroppableContainer({
               aria-label="search-documents"
             />
             {!isSearchFocused && !searchQuery && (
-              <kbd className="pointer-events-none leading-4 absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex h-5 min-w-5 items-center justify-center app-radius-md border border-border bg-muted px-1 font-mono text-[11px] text-muted-foreground">
+              <kbd className=" select-none pointer-events-none leading-4 absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex h-5 min-w-5 items-center justify-center app-radius-md border border-border bg-muted px-1 font-mono text-[11px] text-muted-foreground">
                 /
               </kbd>
             )}
@@ -2264,7 +2264,7 @@ export function NotesDroppableContainer({
                           <DropdownMenuItem
                             key={group.key}
                             className={cn(
-                              "gap-2 py-1.5",
+                              "gap-2 py-5",
                               isActiveGroup && "bg-muted",
                             )}
                             onSelect={() => {
@@ -3188,7 +3188,7 @@ function CalendarTimelineView({
           ref={scrollRef}
         >
           <div className="relative" style={{ width: totalWidth, height: 350 }}>
-            <div className="relative h-7 border-b border-border">
+            <div className="relative h-7 border-b border-border select-none">
               {monthMarkers.map((m, i) => (
                 <div
                   key={i}
@@ -3200,7 +3200,7 @@ function CalendarTimelineView({
               ))}
             </div>
 
-            <div className="relative h-8 border-b border-border">
+            <div className="relative h-8 border-b border-border select-none">
               {dateTicks.map((t, i) => (
                 <div
                   key={i}
@@ -4361,7 +4361,7 @@ function EmptyTableState({
       <CardContent className="py-10 text-center">
         <div className="flex flex-col items-center justify-center">
           <div className="h-10 w-10 flex items-center justify-center mb-4">
-            <FileText className="h-8 w-8 text-primary" />
+            <FileText className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold mb-2 text-foreground">
             No notes or uploads yet
