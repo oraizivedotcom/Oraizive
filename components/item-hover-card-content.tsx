@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SkeletonTextAnimation from "@/components/ui/SkeletonTextAnimation";
 import IntentPrefetchLink from "@/components/IntentPrefetchLink";
 import {
   WhiteboardPreview,
@@ -186,8 +187,7 @@ export function ItemHoverCardContent({
         const previewTitle = result.title || result.metadata.siteName;
         const resolvedItem: ResolvedHoverItem = {
           kind: "link",
-          title:
-            previewTitle || parsedUrl.hostname.replace(/^www\./, ""),
+          title: previewTitle || parsedUrl.hostname.replace(/^www\./, ""),
           url: parsedUrl.href,
           platform: detectLinkPlatform(parsedUrl.href),
           metadata: result.metadata,
@@ -204,6 +204,10 @@ export function ItemHoverCardContent({
       .catch((error) => {
         if (!cancelled) {
           console.error("Failed to fetch link preview:", error);
+          setFetchedFallback({
+            url: parsedUrl.href,
+            metadata: {},
+          });
         }
       });
 
@@ -239,15 +243,33 @@ export function ItemHoverCardContent({
       fallbackUrl.startsWith(
         typeof window !== "undefined" ? window.location.origin : "",
       );
+    const isPreviewLoading =
+      !preview && !isInternal && /^https?:\/\//i.test(fallbackUrl);
 
     return (
       <div className="flex flex-col w-[340px] max-w-[90vw] overflow-hidden app-radius-xl border border-border bg-card text-card-foreground">
         <div className="p-2 border-b border-border flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <LinkFaviconBadge url={fallbackUrl} className="h-5 w-5 shrink-0" />
-            <span className="text-xs font-semibold text-foreground truncate">
-              {domain || "Link"}
-            </span>
+            <div className="min-w-0 min-h-[2.125rem]">
+              {isPreviewLoading ? (
+                <>
+                  <SkeletonTextAnimation className="h-3 w-28 mx-0 mb-1" />
+                  <SkeletonTextAnimation className="h-2 w-16 mx-0" />
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {preview?.title || domain || "Link"}
+                  </p>
+                  {preview?.metadata?.siteName && (
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {preview.metadata.siteName}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <Button
@@ -278,24 +300,14 @@ export function ItemHoverCardContent({
         </div>
 
         <div className="p-2 space-y-3">
-          {preview?.title && (
-            <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2 [overflow-wrap:anywhere]">
-              {preview.title}
-            </p>
-          )}
           {preview?.metadata?.description && (
             <p className="line-clamp-3 text-xs text-muted-foreground/90 leading-relaxed">
               {preview.metadata.description}
             </p>
           )}
-          <a
-            href={fallbackUrl}
-            target={isInternal ? undefined : "_blank"}
-            rel={isInternal ? undefined : "noreferrer noopener"}
-            className="block text-xs text-muted-foreground break-all leading-relaxed hover:text-foreground"
-          >
+          <p className="text-xs text-muted-foreground break-all leading-relaxed">
             {fallbackUrl}
-          </a>
+          </p>
           {preview?.metadata?.thumbnailUrl && (
             <ThumbnailFrame src={preview.metadata.thumbnailUrl}>
               <LinkThumbnail
@@ -664,14 +676,9 @@ export function ItemHoverCardContent({
           </p>
         )}
 
-        <a
-          href={linkObj.url}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="block text-xs text-muted-foreground break-all leading-relaxed hover:text-foreground"
-        >
+        <p className="text-xs text-muted-foreground break-all leading-relaxed">
           {linkObj.url}
-        </a>
+        </p>
 
         {hasRealThumbnail ? (
           <ThumbnailFrame src={item.metadata?.thumbnailUrl}>
