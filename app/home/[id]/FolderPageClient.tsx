@@ -1302,7 +1302,7 @@ function SliderTabsList({
             label="New Table"
             workingSpaceId={workingSpaceId as Id<"folders">}
             compactOnHover
-            className="variant-default  relative z-20 mb-2.5 ml-2 h-10 shrink-0  app-radius-lg app-radius-b-none app-radius-r-none "
+            className="variant-default  relative z-10 mb-2.5 ml-2 h-10 shrink-0  app-radius-lg app-radius-b-none app-radius-r-none "
           />
           <div
             className="absolute right-0 top-0 h-[3.3rem] -bottom-5 w-32 z-[5] pointer-events-none transition-opacity duration-200"

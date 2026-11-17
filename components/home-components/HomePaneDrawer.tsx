@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  createContext,
   memo,
   type ReactNode,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -40,34 +38,10 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import ItemSettingsMenu from "@/components/home-components/ItemSettingsMenu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { HomePaneContext, type HomePaneItem } from "./HomePaneContext";
 
-export type HomePaneItem =
-  | {
-      type: "note";
-      id: Id<"documents">;
-      title?: string;
-      slug?: string;
-      workingSpaceId?: Id<"folders">;
-    }
-  | {
-      type: "pdf";
-      id: Id<"pdfs">;
-      title?: string;
-      workingSpaceId?: Id<"folders">;
-    }
-  | {
-      type: "workspace";
-      id: Id<"folders">;
-      title?: string;
-    };
-
-type HomePaneContextValue = {
-  activeItem: HomePaneItem | null;
-  openPane: (item: HomePaneItem) => void;
-  closePane: () => void;
-};
-
-const HomePaneContext = createContext<HomePaneContextValue | null>(null);
+export { useHomePane } from "./HomePaneContext";
+export type { HomePaneItem } from "./HomePaneContext";
 
 const PANE_WIDTH_STORAGE_KEY = "oraizive_home_pane_width";
 const MIN_PANE_WIDTH = 360;
@@ -469,11 +443,3 @@ export const HomePaneProvider = memo(function HomePaneProvider({
     </HomePaneContext.Provider>
   );
 });
-
-export function useHomePane() {
-  const context = useContext(HomePaneContext);
-  if (!context) {
-    throw new Error("useHomePane must be used within HomePaneProvider.");
-  }
-  return context;
-}
