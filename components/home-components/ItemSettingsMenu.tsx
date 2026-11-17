@@ -27,6 +27,7 @@ import {
   FileDown,
   FileOutput,
   ExternalLink,
+  PanelRightOpen,
   Copy,
   Check,
 } from "lucide-react";
@@ -64,6 +65,7 @@ import {
 import { ItemPropertiesMenu } from "./ItemProperties";
 import MoveItemDialog from "./MoveItemDialog";
 import { Badge } from "../ui/badge";
+import { useHomePane } from "./HomePaneContext";
 
 export type ItemSettingsKind =
   | "note"
@@ -123,6 +125,7 @@ export default function ItemSettingsMenu({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { openPane } = useHomePane();
 
   const resolvedIconVariant = iconVariantProp || iconVariant || "vertical_icon";
   const resolvedBtnClassName = btnClassNameProp || btnClassName;
@@ -598,6 +601,27 @@ export default function ItemSettingsMenu({
                     />
                     Open in New Tab
                   </a>
+                </Button>
+              )}
+              {(normalizedKind === "note" || normalizedKind === "pdf") && (
+                <Button
+                  variant="SidebarMenuButton"
+                  className="h-8 w-full px-2 text-sm"
+                  onClick={() => {
+                    openPane({
+                      type: normalizedKind,
+                      id: itemId,
+                      title: itemTitle,
+                    });
+                    setOpen(false);
+                  }}
+                  aria-label="open-in-pane"
+                >
+                  <PanelRightOpen
+                    size={14}
+                    className="text-muted-foreground"
+                  />
+                  Open in Pane
                 </Button>
               )}
               {newTabHref && <DropdownMenuSeparator />}
