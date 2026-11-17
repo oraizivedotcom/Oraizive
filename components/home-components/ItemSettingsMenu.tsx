@@ -190,6 +190,20 @@ export default function ItemSettingsMenu({
     (normalizedKind === "link" ? (itemData as any)?.url : "") ??
     "Untitled";
 
+  const itemWorkspaceId = itemData?.workingSpaceId ?? itemData?.folderId;
+  const newTabHref =
+    normalizedKind === "folder"
+      ? `/home/${itemId}`
+      : normalizedKind === "link"
+        ? (itemData as any)?.url
+        : normalizedKind === "table"
+          ? itemData?.folderId
+            ? `/home/${itemData.folderId}?tableId=${itemId}`
+            : null
+          : itemWorkspaceId
+            ? `/home/${itemWorkspaceId}/${buildItemSlug(itemTitle, itemId)}`
+            : null;
+
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(itemTitle);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -522,12 +536,12 @@ export default function ItemSettingsMenu({
               </DropdownMenuTrigger>
               <TooltipContent side="bottom" align={resolvedTooltipAlign}>
                 {normalizedKind === "folder"
-                  ? "Rename, Delete"
+                  ? "Rename, Open in New Tab, Delete"
                   : normalizedKind === "table"
-                    ? "Rename, Move, Delete"
+                    ? "Rename, Open in New Tab, Move, Delete"
                     : hasRename
-                      ? "Rename, Pin, Move, Download, Delete"
-                      : "Pin, Open, Move, Delete"}
+                      ? "Rename, Pin, Open in New Tab, Move, Download, Delete"
+                      : "Pin, Open in New Tab, Copy Link, Delete"}
               </TooltipContent>
             </Tooltip>
           )}
@@ -566,6 +580,28 @@ export default function ItemSettingsMenu({
             )}
 
             <DropdownMenuGroup>
+              {newTabHref && (
+                <Button
+                  variant="SidebarMenuButton"
+                  className="h-8 w-full px-2 text-sm"
+                  asChild
+                  aria-label="open-in-new-tab"
+                >
+                  <a
+                    href={newTabHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink
+                      size={14}
+                      className="text-muted-foreground"
+                    />
+                    Open in New Tab
+                  </a>
+                </Button>
+              )}
+              {newTabHref && <DropdownMenuSeparator />}
+
               {normalizedKind !== "table" && normalizedKind !== "folder" && (
                 <Button
                   variant="SidebarMenuButton"
@@ -578,54 +614,6 @@ export default function ItemSettingsMenu({
                     ? `Unpin ${kindLabel}`
                     : `Pin ${kindLabel}`}
                 </Button>
-              )}
-
-              {normalizedKind === "link" && (itemData as any)?.url && (
-                <>
-                  <Button
-                    variant="SidebarMenuButton"
-                    className="h-8 w-full px-2 text-sm"
-                    asChild
-                    aria-label="open-link"
-                  >
-                    <a
-                      href={(itemData as any).url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink
-                        size={14}
-                        className="text-muted-foreground"
-                      />
-                      Open Link
-                    </a>
-                  </Button>
-
-                  <Button
-                    variant="SidebarMenuButton"
-                    className="h-8 w-full px-2 text-sm"
-                    onClick={handleCopyLink}
-                    aria-label="copy-link"
-                  >
-                    {copied ? (
-                      <Check size={14} className="text-muted-foreground" />
-                    ) : (
-                      <Copy size={14} className="text-muted-foreground" />
-                    )}
-                    {copied ? "Copied!" : "Copy Link"}
-                  </Button>
-                </>
-              )}
-
-              {(normalizedKind === "note" ||
-                normalizedKind === "pdf" ||
-                normalizedKind === "whiteboard") && (
-                <ItemPropertiesMenu
-                  status={itemData?.status}
-                  priority={itemData?.priority}
-                  deadline={itemData?.deadline}
-                  onChange={handlePropertyChange}
-                />
               )}
 
               {normalizedKind !== "folder" && (
@@ -642,6 +630,24 @@ export default function ItemSettingsMenu({
                   <FileOutput size={14} className="text-muted-foreground" />
                   Move {kindLabel}
                 </Button>
+              )}
+
+              {normalizedKind === "link" && (itemData as any)?.url && (
+                <>
+                  <Button
+                    variant="SidebarMenuButton"
+                    className="h-8 w-full px-2 text-sm"
+                    onClick={handleCopyLink}
+                    aria-label="copy-link"
+                  >
+                    {copied ? (
+                      <Check size={14} className="text-muted-foreground" />
+                    ) : (
+                      <Copy size={14} className="text-muted-foreground" />
+                    )}
+                    {copied ? "Copied!" : "Copy Link"}
+                  </Button>
+                </>
               )}
 
               {normalizedKind === "note" && (
@@ -728,6 +734,20 @@ export default function ItemSettingsMenu({
                 </DropdownMenuSub>
               )}
 
+              {(normalizedKind === "note" ||
+                normalizedKind === "pdf" ||
+                normalizedKind === "whiteboard") && (
+                <>
+                  <DropdownMenuSeparator />
+                  <ItemPropertiesMenu
+                    status={itemData?.status}
+                    priority={itemData?.priority}
+                    deadline={itemData?.deadline}
+                    onChange={handlePropertyChange}
+                  />
+                </>
+              )}
+
               {canShowWidth && normalizedKind === "note" && (
                 <Button
                   variant="SidebarMenuButton"
@@ -755,7 +775,7 @@ export default function ItemSettingsMenu({
                 </Button>
               )}
 
-              <DropdownMenuSeparator />
+              {normalizedKind !== "folder" && <DropdownMenuSeparator />}
 
               <Button
                 variant="SidebarMenuButton_destructive"

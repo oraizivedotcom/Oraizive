@@ -265,7 +265,7 @@ const TailwindAdvancedEditor = ({
                       <button
                         type="button"
                         aria-label="Delete block"
-                        className="group flex h-5 w-5 mt-0.5 items-center justify-center text-muted-foreground app-radius-none opacity-50 transition-colors hover:bg-border"
+                        className="group p-px flex h-5 w-5 mt-0.5 items-center justify-center text-muted-foreground app-radius-lg opacity-50 transition-colors hover:bg-border"
                         onMouseDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -282,7 +282,7 @@ const TailwindAdvancedEditor = ({
                     <TooltipContent
                       side="left"
                       align="center"
-                      className="text-xs font-bold py-0.5 px-1.5 !app-radius-none"
+                      className="text-xs font-bold py-0.5 px-1.5"
                     >
                       <p>Delete block</p>
                     </TooltipContent>
@@ -294,7 +294,7 @@ const TailwindAdvancedEditor = ({
                         <button
                           type="button"
                           aria-label="Insert block below"
-                          className="flex h-5 w-5 mt-0.5 items-center justify-center text-muted-foreground app-radius-none opacity-50 transition-colors hover:bg-border"
+                          className="flex p-px h-5 w-5 mt-0.5 items-center justify-center text-muted-foreground app-radius-lg opacity-50 transition-colors hover:bg-border"
                           onMouseDown={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -308,7 +308,7 @@ const TailwindAdvancedEditor = ({
                       <TooltipContent
                         side="left"
                         align="center"
-                        className=" text-xs font-bold py-0.5 px-1.5 !app-radius-none"
+                        className=" text-xs font-bold py-0.5 px-1.5"
                       >
                         <p> Click to insert block below </p>
                       </TooltipContent>
@@ -348,7 +348,7 @@ const TailwindAdvancedEditor = ({
                     <TooltipContent
                       side="left"
                       align="center"
-                      className=" text-xs font-bold py-0.5 px-1.5 !app-radius-none"
+                      className=" text-xs font-bold py-0.5 px-1.5"
                     >
                       <p>Drag</p>
                     </TooltipContent>

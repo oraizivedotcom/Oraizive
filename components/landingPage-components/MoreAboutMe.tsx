@@ -8,8 +8,6 @@ export default function MoreAboutMe() {
         <div className="relative pt-10">
           <div className="absolute inset-x-0 bottom-0 top-4 app-radius-sm bg-primary" />
           <div className="absolute inset-x-0 bottom-0 top-2 app-radius-sm bg-primary/90" />
-
-          {/* Main paper */}
           <div
             className="relative overflow-hidden"
             style={{
@@ -50,7 +48,8 @@ export default function MoreAboutMe() {
                     }}
                   >
                     I've been looking for a Note Taking app that's simpler than
-                    Notion but more organized than Google Keep.
+                    Notion, eden.so and craft.do but more organized than Google
+                    Keep .
                   </p>
                   <p
                     className="text-base sm:text-lg leading-relaxed text-muted-foreground"
@@ -61,8 +60,8 @@ export default function MoreAboutMe() {
                     }}
                   >
                     Something clean, structured, with a rich text editor. That's
-                    what oraizive's trying to be: a minimal, structured, Note
-                    Taking app.
+                    what oraizive's trying to be: a minimal, structured, space
+                    to capture your thoughts
                   </p>
                 </div>
 
