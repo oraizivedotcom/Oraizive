@@ -628,7 +628,7 @@ export function ItemHoverCardContent({
                 className="h-6 w-6 shrink-0 mt-0.5"
               />
               <div className="min-w-0">
-                <p className="line-clamp-2 text-sm font-semibold text-foreground [overflow-wrap:anywhere]">
+                <p className="truncate text-sm font-semibold text-foreground">
                   {item.title}
                 </p>
                 {item.metadata?.siteName && (
