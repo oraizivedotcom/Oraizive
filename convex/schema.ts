@@ -56,7 +56,9 @@ export default defineSchema({
     .index("by_tableId", ["tableId"])
     .index("by_folderId", ["folderId"])
     .index("by_slug", ["slug"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_userId_priority", ["userId", "priority"])
+    .index("by_userId_status", ["userId", "status"]),
 
   terminologyMigrationMap: defineTable({
     sourceTable: v.string(),
@@ -86,7 +88,9 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_folderId", ["folderId"])
-    .index("by_tableId", ["tableId"]),
+    .index("by_tableId", ["tableId"])
+    .index("by_userId_priority", ["userId", "priority"])
+    .index("by_userId_status", ["userId", "status"]),
 
   pdfAnnotations: defineTable({
     pdfId: v.id("pdfs"),
@@ -127,7 +131,9 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_folderId", ["folderId"])
-    .index("by_tableId", ["tableId"]),
+    .index("by_tableId", ["tableId"])
+    .index("by_userId_priority", ["userId", "priority"])
+    .index("by_userId_status", ["userId", "status"]),
 
   links: defineTable({
     url: v.string(),

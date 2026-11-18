@@ -48,3 +48,88 @@ export const getRecentItems = query({
       .slice(0, RECENT_ITEM_LIMIT);
   },
 });
+
+export const getTaskItems = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new ConvexError("Not authenticated");
+
+    const [
+      urgentDocuments,
+      urgentPdfs,
+      urgentWhiteboards,
+      inProgressDocuments,
+      inProgressPdfs,
+      inProgressWhiteboards,
+    ] = await Promise.all([
+      ctx.db
+        .query("documents")
+        .withIndex("by_userId_priority", (q) =>
+          q.eq("userId", userId).eq("priority", "urgent"),
+        )
+        .collect(),
+      ctx.db
+        .query("pdfs")
+        .withIndex("by_userId_priority", (q) =>
+          q.eq("userId", userId).eq("priority", "urgent"),
+        )
+        .collect(),
+      ctx.db
+        .query("whiteboards")
+        .withIndex("by_userId_priority", (q) =>
+          q.eq("userId", userId).eq("priority", "urgent"),
+        )
+        .collect(),
+      ctx.db
+        .query("documents")
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", userId).eq("status", "in_progress"),
+        )
+        .collect(),
+      ctx.db
+        .query("pdfs")
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", userId).eq("status", "in_progress"),
+        )
+        .collect(),
+      ctx.db
+        .query("whiteboards")
+        .withIndex("by_userId_status", (q) =>
+          q.eq("userId", userId).eq("status", "in_progress"),
+        )
+        .collect(),
+    ]);
+
+    const sortByUpdatedAt = <
+      T extends { updatedAt: number; kind: string },
+    >(
+      items: T[],
+    ) => items.sort((a, b) => b.updatedAt - a.updatedAt);
+
+    return {
+      urgentItems: sortByUpdatedAt([
+        ...urgentDocuments.map((item) => ({
+          ...item,
+          kind: "document" as const,
+        })),
+        ...urgentPdfs.map((item) => ({ ...item, kind: "pdf" as const })),
+        ...urgentWhiteboards.map((item) => ({
+          ...item,
+          kind: "whiteboard" as const,
+        })),
+      ]),
+      inProgressItems: sortByUpdatedAt([
+        ...inProgressDocuments
+          .filter((item) => item.priority !== "urgent")
+          .map((item) => ({ ...item, kind: "document" as const })),
+        ...inProgressPdfs
+          .filter((item) => item.priority !== "urgent")
+          .map((item) => ({ ...item, kind: "pdf" as const })),
+        ...inProgressWhiteboards
+          .filter((item) => item.priority !== "urgent")
+          .map((item) => ({ ...item, kind: "whiteboard" as const })),
+      ]),
+    };
+  },
+});
