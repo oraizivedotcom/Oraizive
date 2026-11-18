@@ -10,39 +10,39 @@ import { useEffect, useRef } from "react";
 const featureVideos: Record<string, { video: string; poster: string }> = {
   "Rich Text Editor": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031746/oraizive-texteditor_wcwq0c.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031345/oraizive_document_wllkz0.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031746/oraizive-texteditor_wcwq0c.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031345/oraizive_document_wllkz0.jpg",
   },
   "Simple Organization": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774032089/oraizive-workingspace_vq80uc.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795033115/oraizive_organization_bhtqgn.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774032089/oraizive-workingspace_vq80uc.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795033115/oraizive_organization_bhtqgn.jpg",
   },
   "Don't Loss Ur Stuff": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1777131625/oraizive-search_dd7jou.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031294/oraizive_search_ug94x7.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1777131625/oraizive-search_dd7jou.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031294/oraizive_search_ug94x7.jpg",
   },
   "Publish Your Documents": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774029719/oraizive-Publish_xvq0mm.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031303/oraizive_publish_c5mg9x.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774029719/oraizive-Publish_xvq0mm.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031303/oraizive_publish_c5mg9x.jpg",
   },
   "Download Your Stuff": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031511/oraizive-Downloadyoursfuff_zhgjsp.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031511/oraizive-Downloadyoursfuff_zhgjsp.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.jpg",
   },
-  "Move Your Documents": {
+  "Move Your Stuff": {
     video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774032857/oraizive-moveyourstuff_xyxnhr.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031330/oraizive_movestuff_oavx1w.mp4",
     poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774032857/oraizive-moveyourstuff_xyxnhr.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031330/oraizive_movestuff_oavx1w.jpg",
   },
 };
 
@@ -127,8 +127,8 @@ function FolderFrame({ video, poster }: { video: string; poster: string }) {
         <FolderTab className="relative -mb-px" />
       </div>
 
-      <div className="relative  overflow-hidden rounded-none border border-border border-t-0 bg-gradient-to-br from-primary via-primary/70 to-transparent p-1.5 ">
-        <div className="relative overflow-hidden rounded-none">
+      <div className="relative overflow-hidden app-radius-lg !rounded-tl-none border border-border border-t-0 bg-gradient-to-br from-primary via-primary/70 to-transparent p-1.5">
+        <div className="relative overflow-hidden app-radius-lg !rounded-tl-none">
           <LazyVideo
             video={video}
             poster={poster}

@@ -21,9 +21,9 @@ const DEFAULT_CARDS: FolderCardItem[] = [
     title: "Infinite Canvas & Whiteboard",
     badge: "Canvas",
     videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_1200/v1774021286/oraizive-homepage_irogrs.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031320/oraizive_whiteboard_h6cdom.mp4",
     posterSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_1200/v1774021286/oraizive-homepage_irogrs.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_1200/v1795031320/oraizive_whiteboard_h6cdom.jpg",
   },
   {
     id: "pdf",
@@ -31,9 +31,9 @@ const DEFAULT_CARDS: FolderCardItem[] = [
     title: "Smart PDF Viewer & Annotator",
     badge: "PDF Tool",
     videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031511/oraizive-Downloadyoursfuff_zhgjsp.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031871/oraizive_pdf_nqj8y7.mp4",
     posterSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031511/oraizive-Downloadyoursfuff_zhgjsp.jpg",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.jpg",
   },
   {
     id: "documents",
@@ -41,7 +41,7 @@ const DEFAULT_CARDS: FolderCardItem[] = [
     title: "Distraction-Free Rich Text Editor",
     badge: "Editor",
     videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031746/oraizive-texteditor_wcwq0c.mp4",
+      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031345/oraizive_document_wllkz0.mp4",
     posterSrc:
       "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031746/oraizive-texteditor_wcwq0c.jpg",
   },
@@ -202,7 +202,7 @@ export default function HeroFolder({
                     position: "absolute",
                     transformOrigin: "bottom center",
                   }}
-                  className="w-[96%] h-full overflow-hidden flex flex-col"
+                  className="flex h-full w-[96%] flex-col overflow-hidden app-radius-lg"
                 >
                   <VideoPlayer
                     src={card.videoSrc}
@@ -223,7 +223,7 @@ export default function HeroFolder({
           </svg>
 
           <div
-            className="absolute bottom-0 right-0 w-[70%] md:w-[48%] h-[35%] pointer-events-none z-40 backdrop-blur-md bg-card-foreground/50 overflow-hidden"
+            className="absolute bottom-0 right-0 z-40 h-[30%] w-[70%] overflow-hidden bg-card-foreground/70 pointer-events-none md:w-[40%]"
             style={{
               clipPath: "url(#folderPocketClip)",
             }}
@@ -268,7 +268,7 @@ function VideoPlayer({
       disablePictureInPicture
       disableRemotePlayback
       preload="auto"
-      className="w-full h-full object-cover pointer-events-none select-none"
+      className="w-full h-full object-fill pointer-events-none select-none"
     />
   );
 }

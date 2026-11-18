@@ -151,7 +151,7 @@ export const Features = [
     icon: FileDown,
   },
   {
-    title: "Move Your Documents",
+    title: "Move Your Stuff",
     description:
       "Move your documents around, organize your thoughts, and manage your folders your way.",
     icon: FileSymlink,
