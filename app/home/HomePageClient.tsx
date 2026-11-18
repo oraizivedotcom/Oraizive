@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useMutation } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import MaxWContainer from "@/components/ui/MaxWContainer";
@@ -49,10 +50,13 @@ import {
   folderItemGridCardClassName,
   type FolderItemCardItem,
 } from "@/components/home-components/FolderItemGridCard";
+type TaskItems = FunctionReturnType<typeof api.home.getTaskItems>;
+
 const homeMemoryCache: {
   viewer?: any;
   recentWorkspaces?: any;
   recentItems?: any[];
+  taskItems?: TaskItems;
 } = {};
 
 const workspaceNameSchema = z
@@ -64,6 +68,7 @@ export default function HomePageClient() {
   const viewerQuery = useQuery(api.users.viewer, {});
   const recentWorkspacesQuery = useQuery(api.folders.getRecentFolders, {});
   const recentItemsQuery = useQuery(api.home.getRecentItems, {});
+  const taskItemsQuery = useQuery(api.home.getTaskItems, {});
 
   useEffect(() => {
     if (viewerQuery !== undefined) homeMemoryCache.viewer = viewerQuery;
@@ -76,11 +81,15 @@ export default function HomePageClient() {
     if (recentItemsQuery !== undefined)
       homeMemoryCache.recentItems = recentItemsQuery;
   }, [recentItemsQuery]);
+  useEffect(() => {
+    if (taskItemsQuery !== undefined) homeMemoryCache.taskItems = taskItemsQuery;
+  }, [taskItemsQuery]);
 
   const viewer = viewerQuery ?? homeMemoryCache.viewer;
   const recentWorkspaces =
     recentWorkspacesQuery ?? homeMemoryCache.recentWorkspaces;
   const recentItems = recentItemsQuery ?? homeMemoryCache.recentItems;
+  const taskItems = taskItemsQuery ?? homeMemoryCache.taskItems;
 
   const createFolder = useMutation(
     api.folders.createFolder,
@@ -201,6 +210,36 @@ export default function HomePageClient() {
           <FolderNotFound />
         )}
       </div>
+
+      {taskItems && taskItems.urgentItems.length > 0 && (
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-foreground text-xl font-semibold">Urgent</h2>
+          </div>
+
+          <Slider child_type="noteCard ">
+            {taskItems.urgentItems.map((item) => (
+              <RecentItemCard key={`${item.kind}-${item._id}`} item={item} />
+            ))}
+          </Slider>
+        </div>
+      )}
+
+      {taskItems && taskItems.inProgressItems.length > 0 && (
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-foreground text-xl font-semibold">
+              In Progress
+            </h2>
+          </div>
+
+          <Slider child_type="noteCard ">
+            {taskItems.inProgressItems.map((item) => (
+              <RecentItemCard key={`${item.kind}-${item._id}`} item={item} />
+            ))}
+          </Slider>
+        </div>
+      )}
 
       {recentItems && recentItems.length !== 0 && (
         <div className="mb-8">
@@ -550,6 +589,9 @@ interface Note {
   updatedAt: number;
   tags?: Id<"tags">[];
   order?: number;
+  status?: string;
+  priority?: string;
+  deadline?: number;
 }
 
 type RecentItem =
@@ -575,6 +617,9 @@ type RecentItem =
       title?: string;
       folderId?: Id<"folders">;
       workingSpaceId?: Id<"folders">;
+      status?: string;
+      priority?: string;
+      deadline?: number;
       favorite?: boolean;
       createdAt: number;
       updatedAt: number;
@@ -587,6 +632,9 @@ type RecentItem =
       preview?: string;
       folderId?: Id<"folders">;
       workingSpaceId?: Id<"folders">;
+      status?: string;
+      priority?: string;
+      deadline?: number;
       favorite?: boolean;
       createdAt: number;
       updatedAt: number;
