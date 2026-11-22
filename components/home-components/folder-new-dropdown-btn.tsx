@@ -42,7 +42,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { usePendingNoteDraftContext } from "@/components/home-components/PendingNoteDraftProvider";
-import { buildItemSlug, extractIdFromSlug } from "@/lib/slug";
+import { usePendingWhiteboardDraftContext } from "@/components/home-components/PendingWhiteboardDraftProvider";
+import { preloadWhiteboardCanvas } from "@/lib/whiteboard-canvas";
+import { extractIdFromSlug } from "@/lib/slug";
 import {
   getLastVisitedLocation,
   recordLastVisitedLocation,
@@ -131,6 +133,7 @@ export default function FolderNewDropdownBtn({
   const pathname = usePathname();
   const router = useRouter();
   const { beginNoteDraft } = usePendingNoteDraftContext();
+  const { beginWhiteboardDraft } = usePendingWhiteboardDraftContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredAction, setPreferredAction] =
     useState<PreferredAction>("note");
@@ -211,7 +214,6 @@ export default function FolderNewDropdownBtn({
 
   const generateUploadUrl = useMutation(api.pdfs.generateUploadUrl);
   const sendPdf = useMutation(api.pdfs.sendPdf);
-  const createWhiteboard = useMutation(api.whiteboards.createWhiteboard);
 
   const isDisabled = useMemo(
     () => !resolvedWorkingSpaceId || isUploading,
@@ -246,14 +248,12 @@ export default function FolderNewDropdownBtn({
       const targetTableId = await resolveTargetTableId();
       if (!targetTableId) return;
 
-      const whiteboardId = await createWhiteboard({
+      const { token } = beginWhiteboardDraft({
         title: "Untitled whiteboard",
         tableId: targetTableId,
-        folderId: resolvedWorkingSpaceId,
+        workingSpaceId: resolvedWorkingSpaceId,
       });
-      router.push(
-        `/home/${resolvedWorkingSpaceId}/${buildItemSlug("Untitled whiteboard", whiteboardId)}`,
-      );
+      router.push(`/home/${resolvedWorkingSpaceId}/draft-whiteboard-${token}`);
     } catch (error) {
       console.error("Failed to create whiteboard:", error);
       toast({
@@ -263,7 +263,7 @@ export default function FolderNewDropdownBtn({
       });
     }
   }, [
-    createWhiteboard,
+    beginWhiteboardDraft,
     resolveTargetTableId,
     resolvedWorkingSpaceId,
     router,
@@ -429,7 +429,10 @@ export default function FolderNewDropdownBtn({
         onChange={(event) => void handleFileChange(event)}
       />
 
-      <div className={cn("flex h-9 items-center overflow-hidden", className)}>
+      <div
+        className={cn("flex h-9 items-center overflow-hidden", className)}
+        onPointerEnter={() => void preloadWhiteboardCanvas()}
+      >
         <Button
           type="button"
           variant={variant}
@@ -484,11 +487,24 @@ export default function FolderNewDropdownBtn({
               </span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2 cursor-pointer"
+              className="justify-between cursor-pointer"
               onClick={() => void handleSelectWhiteboard()}
             >
-              <PanelTop className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="whitespace-nowrap">New Whiteboard</span>
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                <PanelTop className="h-4 w-4 text-muted-foreground shrink-0" />
+                New Whiteboard
+              </span>
+              <span className="inline-flex items-center gap-1 shrink-0 ml-auto">
+                <kbd className="pointer-events-none border border-border inline-flex h-5 select-none items-center justify-center app-radius-md bg-card px-1.5 font-mono text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                  Ctrl
+                </kbd>
+                <kbd className="pointer-events-none border border-border inline-flex h-5 select-none items-center justify-center app-radius-md bg-card px-1.5 font-mono text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                  Shift
+                </kbd>
+                <kbd className="pointer-events-none border border-border inline-flex h-5 select-none items-center justify-center app-radius-md bg-card px-1.5 font-mono text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                  I
+                </kbd>
+              </span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="flex items-center gap-2 cursor-pointer"
@@ -528,6 +544,7 @@ export function GlobalCreateHandler() {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { beginNoteDraft } = usePendingNoteDraftContext();
+  const { beginWhiteboardDraft } = usePendingWhiteboardDraftContext();
 
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -686,6 +703,26 @@ export function GlobalCreateHandler() {
     setOpenMobile,
   ]);
 
+  const handleCreateWhiteboard = useCallback(async () => {
+    if (!resolvedWorkingSpaceId) return;
+    const targetTableId = await resolveTargetTableId();
+    if (!targetTableId) return;
+
+    const { token } = beginWhiteboardDraft({
+      title: "Untitled whiteboard",
+      tableId: targetTableId,
+      workingSpaceId: resolvedWorkingSpaceId,
+    });
+    setOpenMobile(false);
+    router.push(`/home/${resolvedWorkingSpaceId}/draft-whiteboard-${token}`);
+  }, [
+    beginWhiteboardDraft,
+    resolveTargetTableId,
+    resolvedWorkingSpaceId,
+    router,
+    setOpenMobile,
+  ]);
+
   useEffect(() => {
     if (!pendingCreateNoteRef.current || currentItemLocation === undefined) {
       return;
@@ -753,6 +790,23 @@ export function GlobalCreateHandler() {
     return () =>
       window.removeEventListener("keydown", handlerCreateNoteShortcut);
   }, [currentItemLocation, handleCreateNote, isItemRoute]);
+
+  useEffect(() => {
+    const handlerCreateWhiteboardShortcut = (e: KeyboardEvent) => {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "i"
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        void handleCreateWhiteboard();
+      }
+    };
+    window.addEventListener("keydown", handlerCreateWhiteboardShortcut);
+    return () =>
+      window.removeEventListener("keydown", handlerCreateWhiteboardShortcut);
+  }, [handleCreateWhiteboard]);
 
   useEffect(() => {
     const handlerInsertLinkShortcut = (e: KeyboardEvent) => {

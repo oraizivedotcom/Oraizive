@@ -63,7 +63,100 @@
 .whiteboard-canvas .excalidraw .popover,
 .whiteboard-canvas .excalidraw .Modal .Modal__content {
   border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
   box-shadow: none;
+}
+
+/* Keep Excalidraw's floating editors and dialogs in the same visual language
+   as the rest of Oraizive: quiet card surfaces, soft corners, and token-based
+   borders instead of Excalidraw's default blue/purple UI. */
+.whiteboard-canvas .excalidraw .Modal__content,
+.whiteboard-canvas .excalidraw .ElementLinkDialog,
+.whiteboard-canvas .excalidraw .excalidraw-hyperlinkContainer {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius);
+  box-shadow: none !important;
+}
+
+.whiteboard-canvas .excalidraw .ElementLinkDialog {
+  gap: 1.25rem;
+}
+
+.whiteboard-canvas .excalidraw .ExcTextField__input,
+.whiteboard-canvas .excalidraw .excalidraw-hyperlinkContainer-input {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  border-radius: calc(var(--radius) - 0.375rem);
+  color: hsl(var(--foreground));
+  box-shadow: none !important;
+}
+
+.whiteboard-canvas .excalidraw .ExcTextField__input:hover,
+.whiteboard-canvas .excalidraw .ExcTextField__input:focus-within,
+.whiteboard-canvas .excalidraw .excalidraw-hyperlinkContainer:focus-within {
+  border-color: hsl(var(--ring));
+}
+
+.whiteboard-canvas .excalidraw .ExcTextField__input input,
+.whiteboard-canvas .excalidraw .excalidraw-hyperlinkContainer-input {
+  font-family: inherit;
+}
+
+/* ElementLinkDialog nests the native input inside Excalidraw's field shell.
+   Only the shell should draw an edge; otherwise focused links look double framed. */
+.whiteboard-canvas .excalidraw .ElementLinkDialog .ExcTextField__input input {
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+.whiteboard-canvas .excalidraw .Dialog__action-button,
+.whiteboard-canvas .excalidraw .ElementLinkDialog button:not(
+    .ElementLinkDialog__remove
+  ) {
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 0.25rem);
+  box-shadow: none;
+}
+
+.whiteboard-canvas .excalidraw .Dialog__action-button--primary,
+.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(
+    .ElementLinkDialog__remove
+  ) {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.whiteboard-canvas .excalidraw .Dialog__action-button--primary:hover,
+.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(
+    .ElementLinkDialog__remove
+  ):hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.whiteboard-canvas .excalidraw .ElementLinkDialog .ElementLinkDialog__remove,
+.whiteboard-canvas
+  .excalidraw
+  .ElementLinkDialog
+  .ElementLinkDialog__remove
+  .ToolIcon__icon {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Excalidraw's unclassed middle action opens its object-linking dialog.
+   Oraizive keeps the lightweight edit/remove link controls only. */
+.whiteboard-canvas
+  .excalidraw
+  .excalidraw-hyperlinkContainer__buttons
+  > button:not(.excalidraw-hyperlinkContainer--edit):not(
+    .excalidraw-hyperlinkContainer--remove
+  ) {
+  display: none !important;
 }
 
 section[aria-labelledby$="canvasActions-title"],
