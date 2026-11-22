@@ -35,9 +35,12 @@ import {
   usePendingNoteDraftContext,
 } from "@/components/home-components/PendingNoteDraftProvider";
 import PendingNoteDraftPageClient from "@/app/home/[id]/[itemId]/PendingNoteDraftPageClient";
+import PendingWhiteboardDraftPageClient from "@/app/home/[id]/[itemId]/PendingWhiteboardDraftPageClient";
+import { PendingWhiteboardDraftProvider } from "@/components/home-components/PendingWhiteboardDraftProvider";
 import NotePageClient from "@/app/home/[id]/[itemId]/NotePageClient";
 import { resolveDraftTokenToRender } from "@/lib/pendingNoteDraft";
 import { getPrefetchedNote } from "@/lib/notePrefetchCache";
+import { preloadWhiteboardCanvas } from "@/lib/whiteboard-canvas";
 const fadeTransition = {
   show: { ease: "easeInOut" as const, duration: 0 },
   hide: { ease: "easeInOut" as const, duration: 0 },
@@ -53,6 +56,13 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
   const [scrollTop, setScrollTop] = useState(0);
   const [isDark, setIsDark] = useState(false);
   const { resolvedTheme } = useTheme();
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => void preloadWhiteboardCanvas(),
+      1_000,
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
   useEffect(() => {
     if (resolvedTheme === "dark") setIsDark(true);
     else setIsDark(false);
@@ -90,6 +100,11 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
       : null;
   const routeDraftToken = currentItemSlug?.startsWith("draft-")
     ? currentItemSlug.slice("draft-".length)
+    : null;
+  const routeWhiteboardDraftToken = currentItemSlug?.startsWith(
+    "draft-whiteboard-",
+  )
+    ? currentItemSlug.slice("draft-whiteboard-".length)
     : null;
   const activeDraft = activeDraftToken ? getDraft(activeDraftToken) : undefined;
   const slugId = currentItemSlug ? extractIdFromSlug(currentItemSlug) : null;
@@ -200,7 +215,7 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
 
   const noteTitle = parseSlug(`${pathSegments[2] || ""}`);
   const isPdfRoute = Boolean(pdfId);
-  const isWhiteboardRoute = Boolean(whiteboardId);
+  const isWhiteboardRoute = Boolean(whiteboardId || routeWhiteboardDraftToken);
 
   const showTopFade = isWhiteboardRoute ? true : scrollTop > 0;
 
@@ -297,6 +312,11 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
               noteId={cachedRouteNote._id}
               initialNote={cachedRouteNote}
             />
+          ) : routeWhiteboardDraftToken ? (
+            <PendingWhiteboardDraftPageClient
+              key={routeWhiteboardDraftToken}
+              token={routeWhiteboardDraftToken}
+            />
           ) : draftTokenToRender ? (
             <PendingNoteDraftPageClient
               key={draftTokenToRender}
@@ -317,11 +337,13 @@ HomeContent.displayName = "homeContent";
 const HomeClientLayout = memo(({ children }: { children: ReactNode }) => {
   return (
     <PendingNoteDraftProvider>
-      <SidebarProvider>
-        <HomePaneProvider>
-          <HomeContent>{children}</HomeContent>
-        </HomePaneProvider>
-      </SidebarProvider>
+      <PendingWhiteboardDraftProvider>
+        <SidebarProvider>
+          <HomePaneProvider>
+            <HomeContent>{children}</HomeContent>
+          </HomePaneProvider>
+        </SidebarProvider>
+      </PendingWhiteboardDraftProvider>
     </PendingNoteDraftProvider>
   );
 });

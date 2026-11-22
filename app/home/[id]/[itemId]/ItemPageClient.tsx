@@ -8,6 +8,7 @@ import NotePageClient from "./NotePageClient";
 import WhiteboardPageClient from "./WhiteboardPageClient";
 import PdfViewerPageClient from "./PdfViewerPageClient";
 import PendingNoteDraftPageClient from "./PendingNoteDraftPageClient";
+import PendingWhiteboardDraftPageClient from "./PendingWhiteboardDraftPageClient";
 import NoteLoadingSkeletonUI from "@/components/ui/NoteLoadingSkeletonUI";
 
 interface ItemPageClientProps {
@@ -15,6 +16,9 @@ interface ItemPageClientProps {
 }
 
 export default function ItemPageClient({ rawItemId }: ItemPageClientProps) {
+  const whiteboardDraftToken = rawItemId.startsWith("draft-whiteboard-")
+    ? rawItemId.slice("draft-whiteboard-".length)
+    : null;
   const draftToken = rawItemId.startsWith("draft-")
     ? rawItemId.slice("draft-".length)
     : null;
@@ -23,6 +27,10 @@ export default function ItemPageClient({ rawItemId }: ItemPageClientProps) {
     api.documents.getItemType,
     draftToken ? "skip" : { id: resolvedId },
   );
+
+  if (whiteboardDraftToken) {
+    return <PendingWhiteboardDraftPageClient token={whiteboardDraftToken} />;
+  }
 
   if (draftToken) {
     return <PendingNoteDraftPageClient token={draftToken} />;
