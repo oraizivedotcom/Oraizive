@@ -11,7 +11,6 @@ import {
   Pin,
   FolderPlus,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
@@ -41,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHomePane } from "@/components/home-components/HomePaneDrawer";
+import { useToast } from "@/hooks/use-toast";
 import ItemContextMenu from "@/components/home-components/ItemContextMenu";
 import ItemSettingsMenu, {
   ItemSettingsKind,
@@ -426,6 +426,7 @@ function WorkspaceCard({
   handleCreateFolder,
   loading,
 }: WorkspaceCardProps) {
+  const { openPane } = useHomePane();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -517,6 +518,16 @@ function WorkspaceCard({
             href={`/home/${workspace._id}`}
             aria-label={`Open ${workspace.name || "Untitled"}`}
             className="absolute inset-0 z-[1]"
+            onClick={(event) => {
+              if (event.button !== 0 || !event.altKey) return;
+              event.preventDefault();
+              event.stopPropagation();
+              openPane({
+                type: "workspace",
+                id: workspace._id,
+                title: workspace.name || "Untitled",
+              });
+            }}
           />
           <CardHeader className="pb-3 relative">
             {isEditingName ? (
@@ -656,6 +667,8 @@ function isEmptyWhiteboard(snapshot?: string) {
 }
 
 function RecentItemCard({ item }: { item: RecentItem }) {
+  const { openPane } = useHomePane();
+  const { toast } = useToast();
   const isLink = item.kind === "link";
   const workspaceId = isLink
     ? undefined
@@ -726,7 +739,13 @@ function RecentItemCard({ item }: { item: RecentItem }) {
   );
 
   const card = isLink ? (
-    <a href={href} target="_blank" rel="noreferrer" className={cardClassName}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={cardClassName}
+      onClick={(event) => handleHomeItemAltClick(event, item, openPane, toast)}
+    >
       {content}
     </a>
   ) : (
@@ -735,6 +754,7 @@ function RecentItemCard({ item }: { item: RecentItem }) {
       href={href}
       prefetchNoteId={item.kind === "document" ? item._id : undefined}
       className={cardClassName}
+      onClick={(event) => handleHomeItemAltClick(event, item, openPane, toast)}
     >
       {content}
     </IntentPrefetchLink>
@@ -750,4 +770,45 @@ function RecentItemCard({ item }: { item: RecentItem }) {
       {card}
     </ItemContextMenu>
   );
+}
+
+function handleHomeItemAltClick(
+  event: React.MouseEvent,
+  item: RecentItem,
+  openPane: ReturnType<typeof useHomePane>["openPane"],
+  toast: ReturnType<typeof useToast>["toast"],
+) {
+  if (event.button !== 0 || !event.altKey) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (item.kind === "document") {
+    openPane({
+      type: "note",
+      id: item._id,
+      title: item.title || "Untitled",
+      workingSpaceId: item.workingSpaceId,
+    });
+    return;
+  }
+
+  if (item.kind === "pdf") {
+    openPane({
+      type: "pdf",
+      id: item._id,
+      title: item.title || "Untitled PDF",
+      workingSpaceId: item.workingSpaceId ?? item.folderId,
+    });
+    return;
+  }
+
+  toast({
+    variant: "destructive",
+    title: "Cannot open in side pane",
+    description:
+      item.kind === "whiteboard"
+        ? "Whiteboards cannot be opened in a side pane."
+        : "Links cannot be opened in a side pane.",
+  });
 }
