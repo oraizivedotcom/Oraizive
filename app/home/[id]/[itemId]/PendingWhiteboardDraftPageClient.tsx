@@ -7,6 +7,9 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { buildItemSlug } from "@/lib/slug";
 import { preloadWhiteboardCanvas } from "@/lib/whiteboard-canvas";
+import { cachePrefetchedWhiteboard } from "@/lib/whiteboardPrefetchCache";
+import { useQuery } from "@/cache/useQuery";
+import { api } from "@/convex/_generated/api";
 import {
   usePendingWhiteboardDraft,
   usePendingWhiteboardDraftContext,
@@ -29,13 +32,23 @@ export default function PendingWhiteboardDraftPageClient({
   const draft = usePendingWhiteboardDraft(token);
   const { isHydrated, retryDraft, updateDraft } =
     usePendingWhiteboardDraftContext();
+  const syncedWhiteboard = useQuery(
+    api.whiteboards.getWhiteboardById,
+    draft?.whiteboardId ? { _id: draft.whiteboardId } : "skip",
+  );
 
   useEffect(() => {
-    if (!draft?.whiteboardId) return;
+    if (syncedWhiteboard) cachePrefetchedWhiteboard(syncedWhiteboard);
+  }, [syncedWhiteboard]);
+
+  useEffect(() => {
+    // Keep the live draft mounted until Convex has delivered the new record.
+    // The permanent page reads the warmed cache, so there is no skeleton flash.
+    if (!draft?.whiteboardId || syncedWhiteboard === undefined) return;
     router.replace(
       `/home/${draft.workingSpaceId}/${buildItemSlug(draft.title, draft.whiteboardId)}`,
     );
-  }, [draft, router]);
+  }, [draft, router, syncedWhiteboard]);
 
   if (!draft && !isHydrated) return null;
   if (!draft)

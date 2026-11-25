@@ -10,6 +10,7 @@ import { buildItemSlug } from "@/lib/slug";
 import { recordLastVisitedLocation } from "@/lib/last-visited";
 import { useDebouncedCallback } from "use-debounce";
 import { useTheme } from "next-themes";
+import { getPrefetchedWhiteboard } from "@/lib/whiteboardPrefetchCache";
 import type {
   AppState,
   BinaryFileData,
@@ -57,9 +58,11 @@ export default function WhiteboardPageClient({
 }: {
   whiteboardId: Id<"whiteboards">;
 }) {
-  const whiteboard = useQuery(api.whiteboards.getWhiteboardById, {
+  const liveWhiteboard = useQuery(api.whiteboards.getWhiteboardById, {
     _id: whiteboardId,
   });
+  const whiteboard =
+    liveWhiteboard ?? getPrefetchedWhiteboard(String(whiteboardId));
 
   useEffect(() => {
     if (whiteboard?.folderId && whiteboard.tableId) {
