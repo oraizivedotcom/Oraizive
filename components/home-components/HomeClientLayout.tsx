@@ -41,6 +41,7 @@ import NotePageClient from "@/app/home/[id]/[itemId]/NotePageClient";
 import { resolveDraftTokenToRender } from "@/lib/pendingNoteDraft";
 import { getPrefetchedNote } from "@/lib/notePrefetchCache";
 import { preloadWhiteboardCanvas } from "@/lib/whiteboard-canvas";
+import { getPrefetchedWhiteboard } from "@/lib/whiteboardPrefetchCache";
 const fadeTransition = {
   show: { ease: "easeInOut" as const, duration: 0 },
   hide: { ease: "easeInOut" as const, duration: 0 },
@@ -108,6 +109,9 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
     : null;
   const activeDraft = activeDraftToken ? getDraft(activeDraftToken) : undefined;
   const slugId = currentItemSlug ? extractIdFromSlug(currentItemSlug) : null;
+  const cachedWhiteboard = slugId
+    ? getPrefetchedWhiteboard(String(slugId))
+    : undefined;
   const activeDraftNoteId =
     activeDraft?.noteId && slugId === String(activeDraft.noteId)
       ? activeDraft.noteId
@@ -198,6 +202,7 @@ const HomeContent = memo(({ children }: { children: ReactNode }) => {
 
   const whiteboardId =
     rawWhiteboardId ||
+    cachedWhiteboard?._id ||
     (detectedItemType === "whiteboard" ? (slugId as Id<"whiteboards">) : null);
   const pdfId =
     rawPdfId || (detectedItemType === "pdf" ? (slugId as Id<"pdfs">) : null);

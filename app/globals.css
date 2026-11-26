@@ -56,6 +56,13 @@
   background: hsl(var(--background));
 }
 
+/* Excalidraw briefly renders its own “Loading scene…” overlay while its
+   language bundle initializes. The canvas surface is already present, so
+   we dont want that cuz of the  flashing text to users. */
+.whiteboard-canvas .LoadingMessage {
+  display: none !important;
+}
+
 .whiteboard-canvas .excalidraw .Island,
 .whiteboard-canvas .excalidraw .App-toolbar,
 .whiteboard-canvas .excalidraw .App-menu__left,
@@ -113,36 +120,26 @@
 }
 
 .whiteboard-canvas .excalidraw .Dialog__action-button,
-.whiteboard-canvas .excalidraw .ElementLinkDialog button:not(
-    .ElementLinkDialog__remove
-  ) {
+.whiteboard-canvas .excalidraw .ElementLinkDialog button:not(.ElementLinkDialog__remove) {
   border: 1px solid hsl(var(--border));
   border-radius: calc(var(--radius) - 0.25rem);
   box-shadow: none;
 }
 
 .whiteboard-canvas .excalidraw .Dialog__action-button--primary,
-.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(
-    .ElementLinkDialog__remove
-  ) {
+.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(.ElementLinkDialog__remove) {
   background: hsl(var(--primary));
   border-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 
 .whiteboard-canvas .excalidraw .Dialog__action-button--primary:hover,
-.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(
-    .ElementLinkDialog__remove
-  ):hover {
+.whiteboard-canvas .excalidraw .ElementLinkDialog button[type="submit"]:not(.ElementLinkDialog__remove):hover {
   background: hsl(var(--primary) / 0.9);
 }
 
 .whiteboard-canvas .excalidraw .ElementLinkDialog .ElementLinkDialog__remove,
-.whiteboard-canvas
-  .excalidraw
-  .ElementLinkDialog
-  .ElementLinkDialog__remove
-  .ToolIcon__icon {
+.whiteboard-canvas .excalidraw .ElementLinkDialog .ElementLinkDialog__remove .ToolIcon__icon {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -150,12 +147,7 @@
 
 /* Excalidraw's unclassed middle action opens its object-linking dialog.
    Oraizive keeps the lightweight edit/remove link controls only. */
-.whiteboard-canvas
-  .excalidraw
-  .excalidraw-hyperlinkContainer__buttons
-  > button:not(.excalidraw-hyperlinkContainer--edit):not(
-    .excalidraw-hyperlinkContainer--remove
-  ) {
+.whiteboard-canvas .excalidraw .excalidraw-hyperlinkContainer__buttons>button:not(.excalidraw-hyperlinkContainer--edit):not(.excalidraw-hyperlinkContainer--remove) {
   display: none !important;
 }
 

@@ -10,6 +10,7 @@ import PdfViewerPageClient from "./PdfViewerPageClient";
 import PendingNoteDraftPageClient from "./PendingNoteDraftPageClient";
 import PendingWhiteboardDraftPageClient from "./PendingWhiteboardDraftPageClient";
 import NoteLoadingSkeletonUI from "@/components/ui/NoteLoadingSkeletonUI";
+import { getPrefetchedWhiteboard } from "@/lib/whiteboardPrefetchCache";
 
 interface ItemPageClientProps {
   rawItemId: string;
@@ -23,6 +24,7 @@ export default function ItemPageClient({ rawItemId }: ItemPageClientProps) {
     ? rawItemId.slice("draft-".length)
     : null;
   const resolvedId = extractIdFromSlug(rawItemId) || rawItemId;
+  const cachedWhiteboard = getPrefetchedWhiteboard(resolvedId);
   const itemType = useQuery(
     api.documents.getItemType,
     draftToken ? "skip" : { id: resolvedId },
@@ -34,6 +36,10 @@ export default function ItemPageClient({ rawItemId }: ItemPageClientProps) {
 
   if (draftToken) {
     return <PendingNoteDraftPageClient token={draftToken} />;
+  }
+
+  if (cachedWhiteboard) {
+    return <WhiteboardPageClient whiteboardId={cachedWhiteboard._id} />;
   }
 
   if (itemType === undefined) {

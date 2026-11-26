@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useMutation } from "convex/react";
+import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
 import { buildItemSlug } from "@/lib/slug";
 import { preloadWhiteboardCanvas } from "@/lib/whiteboard-canvas";
@@ -22,12 +23,17 @@ const Excalidraw = dynamic(
   { ssr: false },
 );
 
+function getPreview(elements: readonly ExcalidrawElement[]) {
+  const shapeCount = elements.filter((element) => !element.isDeleted).length;
+  if (shapeCount === 0) return "";
+  return shapeCount === 1 ? "1 shape" : `${shapeCount} shapes`;
+}
+
 export default function PendingWhiteboardDraftPageClient({
   token,
 }: {
   token: string;
 }) {
-  const router = useRouter();
   const { resolvedTheme } = useTheme();
   const draft = usePendingWhiteboardDraft(token);
   const { isHydrated, retryDraft, updateDraft } =
@@ -42,13 +48,50 @@ export default function PendingWhiteboardDraftPageClient({
   }, [syncedWhiteboard]);
 
   useEffect(() => {
-    // Keep the live draft mounted until Convex has delivered the new record.
-    // The permanent page reads the warmed cache, so there is no skeleton flash.
-    if (!draft?.whiteboardId || syncedWhiteboard === undefined) return;
-    router.replace(
-      `/home/${draft.workingSpaceId}/${buildItemSlug(draft.title, draft.whiteboardId)}`,
-    );
-  }, [draft, router, syncedWhiteboard]);
+    if (!draft?.whiteboardId || !syncedWhiteboard) return;
+    const currentUrl = new URL(window.location.href);
+    const expectedSlug = buildItemSlug(draft.title, draft.whiteboardId);
+    if (!currentUrl.pathname.endsWith(`/${expectedSlug}`)) {
+      currentUrl.pathname = `/home/${draft.workingSpaceId}/${expectedSlug}`;
+      window.history.replaceState({}, "", currentUrl.href);
+    }
+  }, [draft, syncedWhiteboard]);
+
+  const updateWhiteboard = useMutation(api.whiteboards.updateWhiteboard);
+  const saveLiveScene = useDebouncedCallback(
+    async (snapshot: string, preview: string) => {
+      if (!draft?.whiteboardId) return;
+      await updateWhiteboard({
+        _id: draft.whiteboardId,
+        snapshot,
+        preview,
+      });
+    },
+    700,
+  );
+
+  useEffect(
+    () => () => {
+      void saveLiveScene.flush();
+    },
+    [saveLiveScene],
+  );
+
+  const handleChange = useCallback(
+    async (
+      elements: readonly ExcalidrawElement[],
+      appState: AppState,
+      files: BinaryFiles,
+    ) => {
+      const { serializeAsJSON } = await import("@excalidraw/excalidraw");
+      const snapshot = serializeAsJSON(elements, appState, files, "local");
+      updateDraft(token, snapshot);
+      if (draft?.whiteboardId) {
+        void saveLiveScene(snapshot, getPreview(elements));
+      }
+    },
+    [draft?.whiteboardId, saveLiveScene, token, updateDraft],
+  );
 
   if (!draft && !isHydrated) return null;
   if (!draft)
@@ -57,15 +100,6 @@ export default function PendingWhiteboardDraftPageClient({
         This whiteboard draft is no longer available.
       </div>
     );
-
-  const handleChange = async (
-    elements: readonly ExcalidrawElement[],
-    appState: AppState,
-    files: BinaryFiles,
-  ) => {
-    const { serializeAsJSON } = await import("@excalidraw/excalidraw");
-    updateDraft(token, serializeAsJSON(elements, appState, files, "local"));
-  };
 
   return (
     <div className="whiteboard-canvas relative h-full min-h-[calc(100vh-5rem)] min-w-full overflow-hidden bg-background">
