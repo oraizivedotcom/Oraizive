@@ -10,7 +10,10 @@ import { buildItemSlug } from "@/lib/slug";
 import { recordLastVisitedLocation } from "@/lib/last-visited";
 import { useDebouncedCallback } from "use-debounce";
 import { useTheme } from "next-themes";
-import { getPrefetchedWhiteboard } from "@/lib/whiteboardPrefetchCache";
+import {
+  getPrefetchedWhiteboard,
+  type PrefetchedWhiteboard,
+} from "@/lib/whiteboardPrefetchCache";
 import type {
   AppState,
   BinaryFileData,
@@ -55,14 +58,18 @@ function parseSnapshot(snapshot?: string): WhiteboardSnapshot | null {
 
 export default function WhiteboardPageClient({
   whiteboardId,
+  initialWhiteboard,
 }: {
   whiteboardId: Id<"whiteboards">;
+  initialWhiteboard?: PrefetchedWhiteboard;
 }) {
   const liveWhiteboard = useQuery(api.whiteboards.getWhiteboardById, {
     _id: whiteboardId,
   });
   const whiteboard =
-    liveWhiteboard ?? getPrefetchedWhiteboard(String(whiteboardId));
+    liveWhiteboard ??
+    initialWhiteboard ??
+    getPrefetchedWhiteboard(String(whiteboardId));
 
   useEffect(() => {
     if (whiteboard?.folderId && whiteboard.tableId) {
@@ -208,7 +215,11 @@ export default function WhiteboardPageClient({
   }, [saveScene]);
 
   if (whiteboard === undefined) {
-    return <div className="h-full min-h-[60vh] w-full animate-pulse bg-card" />;
+    // A newly-created board can briefly arrive before its subscription. Keep
+    // the canvas surface stable instead of showing a loading skeleton.
+    return (
+      <div className="whiteboard-canvas h-full min-h-[calc(100vh-5rem)] min-w-full bg-background" />
+    );
   }
 
   return (
