@@ -2497,7 +2497,7 @@ const AppSidebar = React.memo(function AppSidebar({
           <SidebarContent
             ref={setSidebarContentRef}
             onScroll={handleSidebarScroll}
-            className="scrollbar-gutter-stable pb-16 relative text-foreground transition-all duration-200 ease-in-out [&::-webkit-scrollbar]:w-[0.4rem] [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent group-hover:[&::-webkit-scrollbar-thumb]:bg-border"
+            className="scrollbar-gutter-stable pb-16 relative text-foreground transition-all duration-200 ease-in-out mr-1 group-data-[collapsible=icon]:mr-0 [&::-webkit-scrollbar]:w-[0.4rem] [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full group-hover:[&::-webkit-scrollbar-thumb]:bg-border"
           >
             <div ref={setSidebarInnerRef}>
               <SidebarNavigation
