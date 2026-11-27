@@ -127,7 +127,7 @@ export default function HeroSection() {
               style={{
                 textShadow: "-0.6vh -0.6vh 0 #5a4239",
               }}
-              className="bg-[url('https://texturelabs.org/wp-content/uploads/Texturelabs_Fabric_141S.jpg')] bg-cover bg-center bg-clip-text text-transparent leading-[70px] md:leading-[110px] md:text-[140px] text-[75px] font-bold tracking-tight"
+              className="bg-[url('/hero-texture.jpg')] bg-cover bg-center bg-clip-text text-transparent leading-[70px] md:leading-[110px] md:text-[140px] text-[75px] font-bold tracking-tight"
             >
               <span>Simple, Structured</span>
               <br />

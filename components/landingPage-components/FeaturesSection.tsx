@@ -6,45 +6,7 @@ import SectionHeading from "./SectionHeading";
 import Section from "../ui/Section";
 import { NOISE_PNG } from "@/lib/data";
 import { useEffect, useRef } from "react";
-
-const featureVideos: Record<string, { video: string; poster: string }> = {
-  "Rich Text Editor": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031345/oraizive_document_wllkz0.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031345/oraizive_document_wllkz0.jpg",
-  },
-  "Simple Organization": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795033115/oraizive_organization_bhtqgn.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795033115/oraizive_organization_bhtqgn.jpg",
-  },
-  "Don't Loss Ur Stuff": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031294/oraizive_search_ug94x7.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031294/oraizive_search_ug94x7.jpg",
-  },
-  "Publish Your Documents": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031303/oraizive_publish_c5mg9x.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031303/oraizive_publish_c5mg9x.jpg",
-  },
-  "Download Your Stuff": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.jpg",
-  },
-  "Move Your Stuff": {
-    video:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031330/oraizive_movestuff_oavx1w.mp4",
-    poster:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031330/oraizive_movestuff_oavx1w.jpg",
-  },
-};
+import { FEATURE_VIDEOS } from "./landingMedia";
 
 function FolderTab({ className }: { className?: string }) {
   const outline =
@@ -64,7 +26,7 @@ function FolderTab({ className }: { className?: string }) {
   );
 }
 
-function LazyVideo({
+function EagerVideo({
   video,
   poster,
   className,
@@ -77,7 +39,6 @@ function LazyVideo({
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -86,33 +47,31 @@ function LazyVideo({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !loadedRef.current) {
-          loadedRef.current = true;
-          el.src = video;
-          el.load();
+        if (entry.isIntersecting) {
           el.play().catch(() => {});
-          observer.disconnect();
+        } else {
+          el.pause();
         }
       },
-      { rootMargin: "0px", threshold: 0.1 },
+      { rootMargin: "150px 0px", threshold: 0.1 },
     );
 
     observer.observe(wrapper);
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div ref={wrapperRef} className="relative h-full w-full">
       <video
         ref={videoRef}
+        src={video}
         poster={poster}
         loop
         muted
         playsInline
         disablePictureInPicture
         disableRemotePlayback
-        preload="none"
+        preload="auto"
         className={className}
         style={style}
       />
@@ -129,7 +88,7 @@ function FolderFrame({ video, poster }: { video: string; poster: string }) {
 
       <div className="relative overflow-hidden app-radius-lg !rounded-tl-none border border-border border-t-0 bg-gradient-to-br from-primary via-primary/70 to-transparent p-1.5">
         <div className="relative overflow-hidden app-radius-lg !rounded-tl-none">
-          <LazyVideo
+          <EagerVideo
             video={video}
             poster={poster}
             className="h-full w-full object-cover"
@@ -149,7 +108,7 @@ function FeatureItem({
   isEven: boolean;
 }) {
   const itemRef = useRef<HTMLDivElement>(null);
-  const featureMedia = featureVideos[feature.title];
+  const featureMedia = FEATURE_VIDEOS[feature.title as keyof typeof FEATURE_VIDEOS];
 
   const { scrollYProgress } = useScroll({
     target: itemRef,
@@ -215,7 +174,7 @@ export default function FeaturesSection() {
         <div className="space-y-32 py-12">
           {Features.map((feature, index) => {
             const isEven = index % 2 === 0;
-            if (!featureVideos[feature.title]) return null;
+            if (!FEATURE_VIDEOS[feature.title as keyof typeof FEATURE_VIDEOS]) return null;
             return (
               <FeatureItem key={index} feature={feature} isEven={isEven} />
             );

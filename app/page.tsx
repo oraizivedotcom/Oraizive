@@ -7,6 +7,7 @@ import Footer from "@/components/landingPage-components/Footer";
 import MoreAboutMe from "@/components/landingPage-components/MoreAboutMe";
 import { isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
 import FAQ from "@/components/landingPage-components/faq";
+import LandingMediaPreloads from "@/components/landingPage-components/LandingMediaPreloads";
 export default async function HomePage() {
   if (await isAuthenticatedNextjs()) {
     redirect("/home");
@@ -14,6 +15,7 @@ export default async function HomePage() {
 
   return (
     <div className="force-light">
+      <LandingMediaPreloads />
       <div className="relative flex flex-col min-h-screen bg-background text-foreground">
         <div className="absolute inset-0">
           <Navbar />

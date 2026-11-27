@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GridPaperSheet, LinedPaperSheet } from "./ScatteredPapers";
 import { NOISE_PNG } from "@/lib/data";
+import { FOLDER_CARDS } from "./landingMedia";
 
 export interface FolderCardItem {
   id: string;
@@ -14,38 +15,11 @@ export interface FolderCardItem {
   posterSrc: string;
 }
 
-const DEFAULT_CARDS: FolderCardItem[] = [
-  {
-    id: "whiteboard",
-    tabLabel: "Whiteboard",
-    title: "Infinite Canvas & Whiteboard",
-    badge: "Canvas",
-    videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031320/oraizive_whiteboard_h6cdom.mp4",
-    posterSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_1200/v1795031320/oraizive_whiteboard_h6cdom.jpg",
-  },
-  {
-    id: "pdf",
-    tabLabel: "PDF Annotation",
-    title: "Smart PDF Viewer & Annotator",
-    badge: "PDF Tool",
-    videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031871/oraizive_pdf_nqj8y7.mp4",
-    posterSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1795031306/oraizive_download_gdtq9c.jpg",
-  },
-  {
-    id: "documents",
-    tabLabel: "Documents",
-    title: "Distraction-Free Rich Text Editor",
-    badge: "Editor",
-    videoSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/v1795031345/oraizive_document_wllkz0.mp4",
-    posterSrc:
-      "https://res.cloudinary.com/dkbwj5yyg/video/upload/q_80,w_900/v1774031746/oraizive-texteditor_wcwq0c.jpg",
-  },
-];
+const DEFAULT_CARDS: FolderCardItem[] = FOLDER_CARDS.map((card) => ({
+  ...card,
+  videoSrc: card.video,
+  posterSrc: card.poster,
+}));
 
 interface HeroFolderProps {
   cards?: FolderCardItem[];
