@@ -13,6 +13,8 @@ import {
   generateStructuredData,
 } from "@/lib/seo";
 import Script from "next/script";
+import oraiziveLogo from "@/public/oraizive-logo.png";
+import NoteImage from "@/public/LightModeImage.svg";
 
 const lato = Lato({
   weight: ["400", "700"],
@@ -42,12 +44,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
         <link
           rel="preload"
           as="image"
-          href="https://texturelabs.org/wp-content/uploads/Texturelabs_Fabric_141S.jpg"
+          href="/hero-texture.jpg"
           fetchPriority="high"
         />
+        <link rel="preload" as="image" href={oraiziveLogo.src} fetchPriority="high" />
+        <link rel="preload" as="image" href={NoteImage.src} type="image/svg+xml" />
       </head>
       <body
         className={cn(
